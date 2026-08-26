@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Workplace Prime Hub — Interactive Story</title>
+<style>
+:root {
+    --font-display: "Allianz Neo", "Manrope", sans-serif;
+    --font-body: "Allianz Neo Condensed", "DM Sans", sans-serif;
+    --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    --bg-deep: #030c1c;
+    --panel: rgba(18, 43, 84, 0.45);
+    --panel-border: rgba(120, 180, 255, 0.25);
+
+    --c-hub: #3ad0ff;
+    --c-situation: #00c2ff;
+    --c-solution: #00e6c3;
+    --c-impact: #7c8cff;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-body);
+    color: #d7e4f2;
+    background:
+        radial-gradient(ellipse at 12% 6%, rgba(0, 194, 255, 0.16) 0%, transparent 42%),
+        radial-gradient(ellipse at 88% 30%, rgba(0, 230, 195, 0.12) 0%, transparent 40%),
+        radial-gradient(ellipse at 80% 95%, rgba(124, 140, 255, 0.14) 0%, transparent 42%),
+        repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 42px),
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 42px),
+        var(--bg-deep);
+    overflow-x: hidden;
+}
+
+.page {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: clamp(1.5rem, 4vw, 2.5rem) clamp(1rem, 4vw, 2rem) 3rem;
+    position: relative;
+}
+
+/* Floating decorative glyphs */
+.glyph {
+    position: absolute;
+    font-family: var(--font-mono);
+    color: rgba(58,208,255,0.18);
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    pointer-events: none;
+    user-select: none;
+}
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.75rem;
+}
+
+.kicker {
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--c-hub);
+    font-family: var(--font-mono);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.kicker .dot { width: 6px; height: 6px; border-radius: 50%; background: #00e676; box-shadow: 0 0 6px #00e676; animation: blink 1.6s ease-in-out infinite; }
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+.az-logo { height: clamp(18px, 2.5vw, 26px); }
+.az-logo img { height: 100%; width: auto; display: block; filter: brightness(0) invert(1); }
+
+h1 {
+    font-family: var(--font-display);
+    color: #fff;
+    font-size: clamp(1.5rem, 3.8vw, 2.3rem);
+    text-align: center;
+    margin: 0 0 0.35rem;
+    letter-spacing: 0.01em;
+    text-shadow: 0 0 24px rgba(58,208,255,0.35);
+}
+
+.subhead {
+    text-align: center;
+    color: #7f97b3;
+    font-size: 0.9rem;
+    margin: 0 0 2.25rem;
+    font-family: var(--font-mono);
+}
+
+/* Stage */
+.stage {
+    position: relative;
+    width: 100%;
+    max-width: 780px;
+    margin: 0 auto;
+    aspect-ratio: 3 / 4;
+}
+
+.trace-layer { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+
+.trace {
+    fill: none;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    opacity: 0.65;
+    stroke-dasharray: 4 6;
+    animation: dash 1.6s linear infinite;
+}
+.trace.dim { opacity: 0.12; }
+@keyframes dash { to { stroke-dashoffset: -20; } }
+
+/* Radar sweep behind hub */
+@keyframes sweep { to { transform: rotate(360deg); } }
+.radar {
+    position: absolute;
+    top: 1%;
+    left: 50%;
+    width: 15%;
+    aspect-ratio: 1/1;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    z-index: 3;
+    overflow: hidden;
+    pointer-events: none;
+}
+.radar::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: conic-gradient(from 0deg, rgba(58,208,255,0.5), transparent 30%);
+    animation: sweep 3.2s linear infinite;
+}
+
+.hub {
+    position: absolute;
+    top: 1%;
+    left: 50%;
+    width: 15%;
+    aspect-ratio: 1/1;
+    transform: translateX(-50%);
+    z-index: 5;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #103f6e, #041c38 70%);
+    border: 1px solid rgba(58,208,255,0.6);
+    box-shadow: 0 0 26px rgba(58,208,255,0.45), inset 0 0 14px rgba(58,208,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.hub svg { width: 55%; height: 55%; }
+
+@keyframes pulse {
+    0% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
+    100% { transform: translateX(-50%) scale(2.2); opacity: 0; }
+}
+.pulse-ring {
+    position: absolute; top: 1%; left: 50%; width: 15%; aspect-ratio: 1/1; border-radius: 50%;
+    border: 1px solid var(--c-hub); transform: translateX(-50%);
+    animation: pulse 2.6s ease-out infinite; z-index: 4; pointer-events: none;
+}
+.pulse-ring.p2 { animation-delay: 0.9s; border-color: var(--c-solution); }
+.pulse-ring.p3 { animation-delay: 1.8s; border-color: var(--c-impact); }
+
+/* Level chips */
+.chip {
+    position: absolute; left: 50%; transform: translateX(-50%); z-index: 6;
+    background: linear-gradient(180deg, #0c355e, #071f3d);
+    border: 1px solid var(--panel-border);
+    color: #fff; font-family: var(--font-display); font-weight: 700;
+    font-size: clamp(0.72rem, 1.6vw, 0.95rem);
+    padding: 0.4rem 1.1rem; border-radius: 20px; cursor: pointer;
+    transition: box-shadow 0.2s, opacity 0.2s, border-color 0.2s;
+    white-space: nowrap;
+    display: flex; align-items: center; gap: 0.4rem;
+}
+.chip .led { width: 7px; height: 7px; border-radius: 50%; }
+.chip:hover, .chip.active { box-shadow: 0 0 20px var(--glow-color, rgba(58,208,255,0.5)); }
+.chip.dim { opacity: 0.3; }
+
+.chip-situation { top: 22%; border-color: var(--c-situation); }
+.chip-situation .led { background: var(--c-situation); box-shadow: 0 0 6px var(--c-situation); }
+.chip-solution  { top: 47%; border-color: var(--c-solution); }
+.chip-solution .led { background: var(--c-solution); box-shadow: 0 0 6px var(--c-solution); }
+.chip-impact    { top: 72%; border-color: var(--c-impact); }
+.chip-impact .led { background: var(--c-impact); box-shadow: 0 0 6px var(--c-impact); }
+
+/* Cards */
+.card {
+    position: absolute; width: 34%;
+    background: var(--panel);
+    backdrop-filter: blur(6px);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px; padding: 0.6rem 0.75rem;
+    display: flex; align-items: center; gap: 0.55rem;
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.2s, opacity 0.2s, box-shadow 0.2s;
+    z-index: 6;
+}
+.card:hover { transform: translateY(-2px); }
+.card.dim { opacity: 0.22; }
+.card.left { left: 1%; }
+.card.right { right: 1%; flex-direction: row-reverse; text-align: right; }
+
+.card .icon-wrap {
+    flex-shrink: 0; width: 30px; height: 30px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+}
+.card svg { width: 17px; height: 17px; }
+
+.card .label { font-size: clamp(0.66rem, 1.5vw, 0.82rem); font-weight: 600; color: #eaf4ff; line-height: 1.25; }
+.card .stat { display: block; font-family: var(--font-mono); font-size: clamp(0.6rem, 1.3vw, 0.7rem); margin-top: 0.1rem; }
+
+.card[data-step="situation"] { border-color: rgba(0,194,255,0.35); }
+.card[data-step="situation"] .icon-wrap { background: rgba(0,194,255,0.14); border: 1px solid rgba(0,194,255,0.5); }
+.card[data-step="situation"] svg { stroke: var(--c-situation); }
+.card[data-step="situation"] .stat { color: var(--c-situation); }
+.card[data-step="situation"]:hover { border-color: var(--c-situation); box-shadow: 0 0 16px rgba(0,194,255,0.3); }
+
+.card[data-step="solution"] { border-color: rgba(0,230,195,0.35); }
+.card[data-step="solution"] .icon-wrap { background: rgba(0,230,195,0.14); border: 1px solid rgba(0,230,195,0.5); }
+.card[data-step="solution"] svg { stroke: var(--c-solution); }
+.card[data-step="solution"] .stat { color: var(--c-solution); }
+.card[data-step="solution"]:hover { border-color: var(--c-solution); box-shadow: 0 0 16px rgba(0,230,195,0.3); }
+
+.card[data-step="impact"] { border-color: rgba(124,140,255,0.4); }
+.card[data-step="impact"] .icon-wrap { background: rgba(124,140,255,0.16); border: 1px solid rgba(124,140,255,0.5); }
+.card[data-step="impact"] svg { stroke: var(--c-impact); }
+.card[data-step="impact"] .stat { color: var(--c-impact); }
+.card[data-step="impact"]:hover { border-color: var(--c-impact); box-shadow: 0 0 16px rgba(124,140,255,0.35); }
+
+.card-1 { top: 15%; } .card-2 { top: 27%; } .card-3 { top: 41%; }
+.card-4 { top: 53%; } .card-5 { top: 67%; } .card-6 { top: 79%; }
+
+/* Detail panels */
+.panels { max-width: 800px; margin: 2.25rem auto 0; display: grid; gap: 0.85rem; }
+.panel {
+    background: var(--panel); backdrop-filter: blur(6px);
+    border: 1px solid var(--panel-border); border-radius: 10px;
+    padding: 1rem 1.25rem; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s;
+    border-left-width: 3px;
+}
+.panel[data-panel="situation"] { border-left-color: var(--c-situation); }
+.panel[data-panel="solution"] { border-left-color: var(--c-solution); }
+.panel[data-panel="impact"] { border-left-color: var(--c-impact); }
+.panel.active { box-shadow: 0 0 18px rgba(58,208,255,0.12); }
+
+.panel-head { display: flex; justify-content: space-between; align-items: center; font-family: var(--font-display); color: #fff; font-weight: 700; font-size: 1.02rem; }
+.panel-head .tag { font-family: var(--font-mono); font-size: 0.68rem; color: var(--c-hub); margin-right: 0.6rem; }
+.panel-head .chev { transition: transform 0.2s; color: var(--c-hub); font-size: 0.85rem; }
+.panel.active .chev { transform: rotate(180deg); }
+
+.panel-body { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; font-size: 0.93rem; line-height: 1.6; color: #b9cbe0; }
+.panel.active .panel-body { max-height: 220px; margin-top: 0.6rem; }
+
+.meta {
+    margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid rgba(255,255,255,0.08);
+    display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center;
+}
+.pill { background: var(--panel); border: 1px solid var(--panel-border); color: #d7e4f2; font-size: 0.76rem; font-family: var(--font-mono); padding: 0.35rem 0.8rem; border-radius: 20px; }
+
+@media (max-width: 640px) {
+    .card { width: 32%; padding: 0.4rem 0.5rem; }
+    .card .icon-wrap { width: 22px; height: 22px; }
+    .card svg { width: 13px; height: 13px; }
+    .chip { padding: 0.3rem 0.7rem; }
+    .glyph { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+    <span class="glyph" style="top:0; left:2%;">01001101</span>
+    <span class="glyph" style="top:14%; right:1%;">&lt;/&gt;</span>
+    <span class="glyph" style="bottom:22%; left:0;">{ AI }</span>
+    <span class="glyph" style="bottom:6%; right:2%;">10110</span>
+
+    <div class="top-bar">
+        <span class="kicker"><span class="dot"></span>AI-WOW // AI_IMPACT_STORIES</span>
+        <div class="az-logo">
+            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjA5LjU0NyIgaGVpZ2h0PSIxNTEuMTgxIiB2aWV3Qm94PSIwIDAgMTQ3NjAgMzY2MSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIG92ZXJmbG93PSJoaWRkZW4iPjxzdHlsZT4NCi5Nc2Z0T2ZjVGhtX1RleHQxX0ZpbGxfdjIgew0KIGZpbGw6IzAwMzc4MTsgDQp9DQo8L3N0eWxlPg0KPGRlZnM+PC9kZWZzPjxnIGlkPSJFYmVuZV94MDAyMF8xIj48cGF0aCBkPSJNNTgwIDI5MDMgNzUyIDIzMjggMTQzMSAyMzI4IDE1OTIgMjkwMyAyMjIxIDI5MDMgMTU5NiA3MDhDMTU2MCA1NzkgMTQ4MSA1MTkgMTM0NSA1MTlMNDU1IDUxOSA0NTUgNzI2IDUzMCA3MjZDNjIzIDcyNiA2NzMgNzYyIDY3MyA4MzMgNjczIDg4MCA2NjMgOTE5IDYyNiAxMDI2TDAgMjkwMyA1ODAgMjkwM1pNMTM0NSAxOTM4IDg0MSAxOTM4IDExMDkgMTA2MiAxMzQ1IDE5MzhaTTI5NDYgMjkwMyAyOTQ2IDcwMUMyOTQ2IDU4NyAyODc4IDUxOSAyNzY3IDUxOUwyMjE3IDUxOSAyMjE3IDcyNiAyMjUzIDcyNkMyMzQ2IDcyNiAyMzg1IDc2NSAyMzg1IDg1OUwyMzg1IDI5MDMgMjk0NiAyOTAzWk0zOTAwIDI5MDMgMzkwMCA3MDFDMzkwMCA1ODcgMzgzMiA1MTkgMzcyMSA1MTlMMzE3MSA1MTkgMzE3MSA3MjYgMzIwNiA3MjZDMzI5OSA3MjYgMzMzOCA3NjUgMzMzOCA4NTlMMzMzOCAyOTAzIDM5MDAgMjkwM1pNNDg2OCAyOTAzIDQ4NjggMTI5OEM0ODY4IDExODQgNDgwMCAxMTE2IDQ2ODkgMTExNkw0MTQ2IDExMTYgNDE0NiAxMzE5IDQxNzggMTMxOUM0MjcxIDEzMTkgNDMxMCAxMzYyIDQzMTAgMTQ1NUw0MzEwIDI5MDMgNDg2OCAyOTAzWk00ODc5IDczNkM0ODc5IDU3NiA0NzYwIDQ4MCA0NTU3IDQ4MCA0MzU3IDQ4MCA0MjM1IDU3NiA0MjM1IDczNiA0MjM1IDg5OCA0MzU3IDk5NCA0NTU3IDk5NCA0NzYwIDk5NCA0ODc5IDg5OCA0ODc5IDczNlpNNTM0MiAxNjI3QzU1MjggMTUzOCA1NzMyIDE0ODggNTg5MiAxNDg4IDYwNDMgMTQ4OCA2MDk3IDE1NDIgNjA5NyAxNjk4TDYwOTcgMTczOEM1ODY4IDE3NzQgNTc5NyAxNzg5IDU2NjggMTgxNyA1NTkzIDE4MzQgNTUyNCAxODU2IDU0NTYgMTg4NSA1MjMxIDE5NzUgNTEyNCAyMTQ5IDUxMjQgMjQxNyA1MTI0IDI3NTcgNTI3MSAyOTIxIDU1NzUgMjkyMSA1Njg1IDI5MjEgNTc4NiAyOTAwIDU4NzUgMjg2NCA1OTU0IDI4MjkgNjAwMCAyODAwIDYxMTUgMjcxMUw2MTE1IDI3MzZDNjExNSAyODQ2IDYxNzIgMjkwMyA2MjgzIDI5MDNMNjc5NCAyOTAzIDY3OTQgMjcxMSA2NzY5IDI3MTFDNjY3MiAyNzExIDY2MzcgMjY2NyA2NjM3IDI1NTNMNjYzNyAxNzAyQzY2MzcgMTI0OCA2NDc5IDEwOTAgNjAyNSAxMDkwIDU4NzkgMTA5MCA1NzM2IDExMDkgNTU5NiAxMTQxIDU0NTYgMTE3MyA1Mzg1IDEyMDIgNTIxOCAxMjg0TDUzNDIgMTYyN1pNNjA5NyAyMDQ1IDYwOTcgMjM5MkM2MDAzIDI0ODkgNTg5MCAyNTQ3IDU3OTMgMjU0NyA1NjkzIDI1NDcgNTY1NyAyNDk3IDU2NTcgMjM2MyA1NjU3IDIyMzEgNTY4NSAyMTcxIDU3ODYgMjEzMiA1ODYxIDIwOTkgNTk1NyAyMDcxIDYwOTcgMjA0NVpNNzYwOCAyOTAzIDc2MDggMTY5NUM3NzAxIDE1OTEgNzc5NyAxNTQ0IDc5MDggMTU0NCA4MDI3IDE1NDQgODA1NSAxNTkxIDgwNTUgMTc3MUw4MDU1IDI5MDMgODYxMiAyOTAzIDg2MTIgMTY4OEM4NjEyIDE0MDUgODU5MiAxMzE2IDg1MDIgMTIyMCA4NDI3IDExMzcgODMxMyAxMDk1IDgxNjUgMTA5NSA3OTQ3IDEwOTUgNzc5NCAxMTYyIDc1ODcgMTM1NUw3NTg3IDEyODRDNzU4NyAxMTczIDc1MjkgMTExNiA3NDE1IDExMTZMNjg4NiAxMTE2IDY4ODYgMTMxOSA2OTE4IDEzMTlDNzAxMSAxMzE5IDcwNTAgMTM2MiA3MDUwIDE0NTVMNzA1MCAyOTAzIDc2MDggMjkwM1pNMTAyNjcgMjUyOCA5NDg4IDI1MjggMTAyMzEgMTQ4NSAxMDIzMSAxMTE2IDkwNjYgMTExNkM4OTM0IDExMTYgODg3MyAxMTc2IDg4NzMgMTMwOUw4ODczIDE2MzQgOTA4MSAxNjM0IDkwODEgMTYwMkM5MDgxIDE1MjAgOTEyMyAxNDgwIDkyMTIgMTQ4MEw5NjEzIDE0ODAgODg2MiAyNTM1IDg4NjIgMjkwMyAxMDI2NyAyOTAzIDEwMjY3IDI1MjhaTTE0NzYwIDE4MjZDMTQ3NTggNzgyIDEzOTc3IDEgMTI5MzIgMEwxMjkyNyAwQzExODgxIDEgMTEwOTkgNzg1IDExMDk5IDE4MzEgMTEwOTkgMjg3OSAxMTg4MiAzNjYxIDEyOTMwIDM2NjEgMTM5NzYgMzY2MSAxNDc1OCAyODgxIDE0NzYwIDE4MzVMMTQ3NjAgMTgyNlpNMTQ0NDkgMTgzMUMxNDQ0OSAyNzIxIDEzODA5IDMzNjggMTI5MzAgMzM2OCAxMjA1MCAzMzY4IDExNDEwIDI3MjEgMTE0MTAgMTgzMSAxMTQxMCA5NDAgMTIwNTAgMjkzIDEyOTMwIDI5MyAxMzgwOSAyOTMgMTQ0NDkgOTQ0IDE0NDQ5IDE4MzFaTTEyNDMzIDI4NTcgMTI0MzMgMTA2OSAxMjEyMiAxMDY5QzExOTY4IDEwNjkgMTE5MDcgMTEyNiAxMTkwNyAxMjg0TDExOTA3IDI4NTcgMTI0MzMgMjg1N1pNMTM0MjcgMjg1NyAxMzk1MiAyODU3IDEzOTUyIDEyODRDMTM5NTIgMTEyNiAxMzg5MSAxMDY5IDEzNzM3IDEwNjlMMTM0MjcgMTA2OSAxMzQyNyAyODU3Wk0xMzE5NCAyODU3IDEzMTk0IDgzN0MxMzE5NCA2NzYgMTMxMzcgNjIyIDEyOTgwIDYyMkwxMjUwOCA2MjIgMTI1MDggODQ4IDEyNTM2IDg0OEMxMjY0NCA4NDggMTI2NjUgODcyIDEyNjY1IDEwMDJMMTI2NjUgMjg1NyAxMzE5NCAyODU3WiIgY2xhc3M9ImZpbDAgTXNmdE9mY1RobV9UZXh0MV9GaWxsX3YyIiBmaWxsPSIjMDAzNzgxIiBmaWxsLXJ1bGU9Im5vbnplcm8iLz48L2c+PC9zdmc+" alt="Allianz">
+        </div>
+    </div>
+
+    <h1>Workplace Prime Hub</h1>
+    <p class="subhead">&gt; click a node to trace the story_</p>
+
+    <div class="stage">
+        <svg class="trace-layer" viewBox="0 0 300 400" preserveAspectRatio="none">
+            <path class="trace" data-step="situation" stroke="#00c2ff" d="M102,60 L125,60 L125,88 L150,88"></path>
+            <path class="trace" data-step="situation" stroke="#00c2ff" d="M198,108 L175,108 L175,88 L150,88"></path>
+            <path class="trace" data-step="solution" stroke="#00e6c3" d="M102,164 L125,164 L125,188 L150,188"></path>
+            <path class="trace" data-step="solution" stroke="#00e6c3" d="M198,212 L175,212 L175,188 L150,188"></path>
+            <path class="trace" data-step="impact" stroke="#7c8cff" d="M102,268 L125,268 L125,288 L150,288"></path>
+            <path class="trace" data-step="impact" stroke="#7c8cff" d="M198,316 L175,316 L175,288 L150,288"></path>
+            <line x1="150" y1="60" x2="150" y2="288" stroke="rgba(58,208,255,0.3)" stroke-width="1.4"></line>
+            <circle cx="150" cy="88" r="3.2" fill="#00c2ff"></circle>
+            <circle cx="150" cy="188" r="3.2" fill="#00e6c3"></circle>
+            <circle cx="150" cy="288" r="3.2" fill="#7c8cff"></circle>
+        </svg>
+
+        <div class="radar"></div>
+        <div class="pulse-ring"></div>
+        <div class="pulse-ring p2"></div>
+        <div class="pulse-ring p3"></div>
+        <div class="hub">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#3ad0ff" stroke-width="1.6">
+                <circle cx="12" cy="5" r="2"></circle>
+                <circle cx="5" cy="17" r="2"></circle>
+                <circle cx="19" cy="17" r="2"></circle>
+                <circle cx="12" cy="12" r="2"></circle>
+                <path d="M12 7v3"></path>
+                <path d="M10.6 13.2L6.6 15.8"></path>
+                <path d="M13.4 13.2L17.4 15.8"></path>
+            </svg>
+        </div>
+
+        <div class="chip chip-situation active" data-step="situation"><span class="led"></span>Situation</div>
+        <div class="chip chip-solution" data-step="solution"><span class="led"></span>Solution</div>
+        <div class="chip chip-impact" data-step="impact"><span class="led"></span>Impact</div>
+
+        <div class="card left card-1" data-step="situation">
+            <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><rect x="3" y="4" width="18" height="12" rx="1.5"></rect><path d="M2 20h20"></path><path d="M9 20l1-4h4l1 4"></path></svg></div>
+            <div><span class="label">Devices covered</span><span class="stat">15,329</span></div>
+        </div>
+        <div class="card right card-2" data-step="situation">
+            <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><circle cx="5" cy="7" r="2.2"></circle><circle cx="19" cy="7" r="2.2"></circle><circle cx="12" cy="18" r="2.2"></circle><path d="M6.8 8.5L11 16"></path><path d="M17.2 8.5L13 16"></path></svg></div>
+            <div><span class="label">Operating entities</span><span class="stat">9 in NA</span></div>
+        </div>
+
+        <div class="card left card-3" data-step="solution">
+            <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M8 5L2 12l6 7"></path><path d="M16 5l6 7-6 7"></path></svg></div>
+            <div><span class="label">Engineering platform</span><span class="stat">Claude Code</span></div>
+        </div>
+        <div class="card right card-4" data-step="solution">
+            <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><rect x="4" y="4" width="16" height="16" rx="2"></rect><path d="M9 2v3"></path><path d="M15 2v3"></path><path d="M9 19v3"></path><path d="M15 19v3"></path><path d="M2 9h3"></path><path d="M2 15h3"></path><path d="M19 9h3"></path><path d="M19 15h3"></path></svg></div>
+            <div><span class="label">Shipped in</span><span class="stat">90+ v / ~3 mo</span></div>
+        </div>
+
+        <div class="card left card-5" data-step="impact">
+            <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M4 20V10"></path><path d="M12 20V4"></path><path d="M20 20v-7"></path></svg></div>
+            <div><span class="label">Live analytics</span><span class="stat">Dashboards + trends</span></div>
+        </div>
+        <div class="card right card-6" data-step="impact">
+            <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M4 5h16v10H8l-4 4V5z"></path><circle cx="9" cy="10" r="0.8" fill="currentColor" stroke="none"></circle><circle cx="12" cy="10" r="0.8" fill="currentColor" stroke="none"></circle><circle cx="15" cy="10" r="0.8" fill="currentColor" stroke="none"></circle></svg></div>
+            <div><span class="label">AI Assistant</span><span class="stat">Answers in seconds</span></div>
+        </div>
+    </div>
+
+    <div class="panels">
+        <div class="panel active" data-panel="situation">
+            <div class="panel-head"><span><span class="tag">01</span>The Situation</span><span class="chev">&#9650;</span></div>
+            <div class="panel-body">15,329 NA devices across 9 operating entities, no single fleet view. Compliance, policy, and inventory reports were pieced together by hand from Intune, SCCM, and exports, with no trend history.</div>
+        </div>
+        <div class="panel" data-panel="solution">
+            <div class="panel-head"><span><span class="tag">02</span>The Solution</span><span class="chev">&#9650;</span></div>
+            <div class="panel-body">Built end-to-end with Claude Code as the engineering platform, reading the Intune Graph data model and building a FastAPI and React app, shipping 90+ versions in about 3 months. Delivers live fleet analytics, an AI-driven Policy Intelligence suite (CIS audits, gap journeys, plain-English summaries), and an AI Assistant for plain-English fleet questions.</div>
+        </div>
+        <div class="panel" data-panel="impact">
+            <div class="panel-head"><span><span class="tag">03</span>The Impact</span><span class="chev">&#9650;</span></div>
+            <div class="panel-body">A live Dashboard, Trends, and OE Mission Control now cover all 15,329 NA devices with a full Policy Intelligence suite. The AI Assistant answers fleet and policy questions in plain English, instantly, against live data: "We went from piecing together fleet and policy reports by hand to just asking the Hub, and getting a straight answer in seconds."</div>
+        </div>
+    </div>
+
+    <div class="meta">
+        <span class="pill">BUILT_BY: Jesse Fournier</span>
+        <span class="pill">PLATFORM: Claude Code</span>
+        <span class="pill">AREA: ATA WPS</span>
+    </div>
+
+</div>
+
+<script>
+    var clickables = document.querySelectorAll('[data-step]');
+    var panels = document.querySelectorAll('.panel');
+    var chips = document.querySelectorAll('.chip');
+
+    function setActive(step) {
+        clickables.forEach(function(el) {
+            el.classList.toggle('dim', el.getAttribute('data-step') !== step);
+        });
+        chips.forEach(function(c) {
+            c.classList.toggle('active', c.getAttribute('data-step') === step);
+        });
+        panels.forEach(function(p) {
+            p.classList.toggle('active', p.getAttribute('data-panel') === step);
+        });
+    }
+
+    clickables.forEach(function(el) {
+        el.addEventListener('click', function() {
+            var step = el.getAttribute('data-step');
+            setActive(step);
+            var panel = document.querySelector('.panel[data-panel="' + step + '"]');
+            if (panel) { panel.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        });
+    });
+
+    panels.forEach(function(p) {
+        p.addEventListener('click', function() {
+            setActive(p.getAttribute('data-panel'));
+        });
+    });
+</script>
+
+</body>
+</html>
