@@ -1,0 +1,2858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workplace Prime Hub — Interactive Demo</title>
+<style>
+/* ── Fonts (system fallbacks — no external calls) ──────────────────────── */
+@font-face { font-family: 'Manrope'; src: local('Segoe UI'); }
+
+/* ── CSS Tokens (Allianz SOC Glass theme) ─────────────────────────────── */
+:root {
+  --bg-body:        #001228;
+  --bg-card:        rgba(0,30,72,0.72);
+  --bg-panel:       rgba(0,20,56,0.80);
+  --bg-input:       rgba(0,18,52,0.85);
+  --bg-table-head:  rgba(10,30,70,0.90);
+  --bg-table-hover: rgba(0,122,179,0.10);
+  --bg-alt-row:     rgba(0,24,60,0.40);
+
+  --glass-blur:     blur(14px);
+  --glass-brd:      rgba(255,255,255,0.10);
+
+  --text-primary:   #dce9ff;
+  --text-secondary: #b8d0f0;
+  --text-muted:     rgba(160,192,224,0.85);
+  --text-dim:       rgba(160,192,224,0.40);
+  --text-heading:   #e8f0ff;
+  --text-table-head:#ffffff;
+
+  --accent:         #007ab3;
+  --accent-glow:    rgba(0,122,179,0.45);
+  --accent-subtle:  rgba(0,122,179,0.14);
+  --accent-border:  rgba(0,122,179,0.45);
+
+  --green:  #30d878;
+  --yellow: #f5cc40;
+  --red:    #ff5050;
+  --orange: #ff8c20;
+  --blue:   #60a5fa;
+  --purple: #a78bfa;
+
+  --border:         rgba(255,255,255,0.09);
+  --border-table:   rgba(255,255,255,0.06);
+  --border-head:    rgba(255,255,255,0.14);
+
+  --badge-red-bg:    rgba(255,80,80,0.12);
+  --badge-red-fg:    #ff5050;
+  --badge-red-brd:   rgba(255,80,80,0.35);
+  --badge-orange-bg: rgba(255,140,32,0.12);
+  --badge-orange-fg: #ff8c20;
+  --badge-orange-brd:rgba(255,140,32,0.35);
+  --badge-green-bg:  rgba(48,216,120,0.12);
+  --badge-green-fg:  #30d878;
+  --badge-green-brd: rgba(48,216,120,0.35);
+  --badge-yellow-bg: rgba(245,204,64,0.12);
+  --badge-yellow-fg: #f5cc40;
+  --badge-yellow-brd:rgba(245,204,64,0.35);
+  --badge-gray-bg:   rgba(160,192,224,0.07);
+  --badge-gray-fg:   rgba(160,192,224,0.60);
+  --badge-gray-brd:  rgba(160,192,224,0.20);
+  --badge-blue-bg:   rgba(96,165,250,0.12);
+  --badge-blue-fg:   #60a5fa;
+  --badge-blue-brd:  rgba(96,165,250,0.35);
+  --badge-purple-bg: rgba(167,139,250,0.12);
+  --badge-purple-fg: #a78bfa;
+  --badge-purple-brd:rgba(167,139,250,0.35);
+
+  --card-shadow: 0 4px 24px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.07);
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px;
+  --space-5:20px; --space-6:24px; --space-8:32px; --space-10:48px;
+}
+
+/* ── Reset ────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  background: linear-gradient(135deg, #001228 0%, #002050 45%, #001840 100%);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+button { cursor: pointer; font-family: inherit; }
+a { color: var(--accent); text-decoration: none; }
+
+/* ── Animations ───────────────────────────────────────────────────────── */
+@keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.85)} }
+@keyframes heartbeat { 0%{transform:scale(1);opacity:0.7} 70%{transform:scale(2.6);opacity:0} 100%{transform:scale(2.6);opacity:0} }
+@keyframes slide-in  { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+@keyframes count-up  { from{opacity:0;transform:scale(0.9)} to{opacity:1;transform:scale(1)} }
+@keyframes scan-line { from{transform:translateX(-100%)} to{transform:translateX(300%)} }
+@keyframes breathe   { 0%,100%{opacity:1} 50%{opacity:0.75} }
+
+/* ── Demo disclosure banner ───────────────────────────────────────────── */
+#demo-banner {
+  grid-row: 1;
+  background: var(--badge-orange-bg);
+  border-bottom: 1px solid var(--badge-orange-brd);
+  color: var(--badge-orange-fg);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 5px 10px;
+  z-index: 20;
+}
+
+/* ── Shell layout ─────────────────────────────────────────────────────── */
+#shell {
+  display: grid;
+  grid-template-rows: auto 46px 1fr;
+  grid-template-columns: 1fr;
+  height: 100vh;
+}
+#shell.present-mode { grid-template-rows: auto 0 1fr; }
+#shell.present-mode #topbar,
+#shell.present-mode #slide-strip,
+#shell.present-mode #notes-panel { display: none !important; }
+#shell.present-mode #main-area {
+  grid-template-columns: 1fr;
+  height: 100vh;
+}
+#shell.present-mode #slide-viewport {
+  border-radius: 0;
+  border: none;
+  height: 100vh;
+}
+#shell.present-mode .slide {
+  height: 100vh;
+}
+
+/* ── Top bar ──────────────────────────────────────────────────────────── */
+#topbar {
+  background: rgba(0,18,60,0.88);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 16px;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.5);
+  z-index: 100;
+}
+#topbar .logo-area {
+  display: flex; align-items: center; gap: 10px;
+}
+.allianz-eagle {
+  width: 28px; height: 28px;
+  background: #ffffff;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 900; color: #003781;
+  flex-shrink: 0;
+}
+#topbar h1 {
+  font-size: 13px; font-weight: 700; letter-spacing: 0.08em;
+  color: #fff; text-transform: uppercase;
+}
+#topbar .version-chip {
+  font-size: 9px; font-family: 'Courier New', monospace; font-weight: 700;
+  color: var(--accent); background: var(--accent-subtle);
+  border: 1px solid var(--accent-border); border-radius: 2px;
+  padding: 2px 6px; letter-spacing: 0.1em;
+}
+#topbar .spacer { flex: 1; }
+.topbar-btn {
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
+  color: var(--text-secondary); border-radius: 2px; padding: 4px 10px;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+  transition: all 0.15s;
+}
+.topbar-btn:hover { background: rgba(255,255,255,0.13); color: #fff; }
+.topbar-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* ── Slide nav ────────────────────────────────────────────────────────── */
+#nav-controls {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; color: var(--text-muted);
+}
+.nav-arrow {
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
+  color: var(--text-secondary); width: 26px; height: 26px; border-radius: 2px;
+  font-size: 12px; display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.nav-arrow:hover:not(:disabled) { background: var(--accent-subtle); border-color: var(--accent-border); color: #fff; }
+.nav-arrow:disabled { opacity: 0.3; cursor: default; }
+#slide-counter { font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 0.06em; min-width: 36px; text-align: center; }
+
+/* ── Main area ────────────────────────────────────────────────────────── */
+#main-area {
+  display: grid;
+  grid-template-columns: 168px 1fr 260px;
+  overflow: hidden;
+}
+
+/* ── Slide strip ──────────────────────────────────────────────────────── */
+#slide-strip {
+  background: rgba(0,12,40,0.80);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-right: 1px solid var(--glass-brd);
+  overflow-y: auto;
+  padding: 10px 8px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+#slide-strip::-webkit-scrollbar { width: 4px; }
+#slide-strip::-webkit-scrollbar-track { background: transparent; }
+#slide-strip::-webkit-scrollbar-thumb { background: #003781; border-radius: 2px; }
+.thumb {
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg-card);
+  padding: 6px 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+.thumb:hover { border-color: var(--accent-border); background: var(--bg-panel); }
+.thumb.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.thumb-num {
+  font-size: 8px; font-family: 'Courier New', monospace;
+  color: var(--text-dim); letter-spacing: 0.1em; margin-bottom: 3px;
+}
+.thumb-title { font-size: 9px; font-weight: 600; color: var(--text-secondary); line-height: 1.3; }
+.thumb-icon { font-size: 18px; margin-bottom: 4px; }
+.thumb.active .thumb-num { color: var(--accent); }
+.thumb.active .thumb-title { color: #fff; }
+
+/* ── Viewport ─────────────────────────────────────────────────────────── */
+#slide-viewport {
+  overflow: hidden;
+  position: relative;
+  background: var(--bg-body);
+}
+.slide {
+  display: none;
+  height: 100%;
+  overflow-y: auto;
+  animation: slide-in 0.25s ease;
+  padding: 24px 28px;
+}
+.slide::-webkit-scrollbar { width: 5px; }
+.slide::-webkit-scrollbar-track { background: transparent; }
+.slide::-webkit-scrollbar-thumb { background: #003781; border-radius: 3px; }
+.slide.active { display: block; }
+
+/* ── Notes panel ──────────────────────────────────────────────────────── */
+#notes-panel {
+  border-left: 1px solid var(--glass-brd);
+  background: rgba(0,12,40,0.80);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+#notes-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  font-size: 9px; font-family: 'Courier New', monospace;
+  font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text-muted);
+}
+#notes-toggle {
+  background: none; border: none; color: var(--text-dim);
+  font-size: 14px; padding: 0 4px; line-height: 1;
+}
+#notes-toggle:hover { color: var(--text-primary); }
+#notes-body {
+  flex: 1; overflow-y: auto; padding: 14px;
+  font-size: 12px; color: var(--text-secondary); line-height: 1.7;
+}
+#notes-body::-webkit-scrollbar { width: 4px; }
+#notes-body::-webkit-scrollbar-thumb { background: #003781; border-radius: 2px; }
+.note-section { margin-bottom: 14px; }
+.note-label {
+  font-size: 8px; font-family: 'Courier New', monospace;
+  font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 4px;
+}
+.note-point { padding: 3px 0 3px 10px; border-left: 2px solid var(--border); margin-bottom: 3px; font-size: 11px; }
+.note-callout {
+  background: rgba(0,122,179,0.1); border: 1px solid var(--accent-border);
+  border-radius: 3px; padding: 8px 10px; margin-top: 8px;
+  font-size: 11px; color: var(--text-primary);
+}
+.note-callout strong { color: var(--accent); }
+
+/* ── Common components ────────────────────────────────────────────────── */
+.card {
+  background: var(--bg-card);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-brd);
+  border-radius: 3px;
+  box-shadow: var(--card-shadow);
+  padding: 16px 18px;
+}
+.card-sm { padding: 12px 14px; }
+.section-label {
+  font-size: 9px; font-family: 'Courier New', monospace;
+  font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 10px;
+}
+h2.slide-title {
+  font-size: 20px; font-weight: 800; color: var(--text-heading);
+  letter-spacing: -0.01em; margin-bottom: 4px;
+}
+.slide-subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 20px; }
+
+.badge {
+  display: inline-block; padding: 2px 7px; border-radius: 2px;
+  font-size: 9px; font-weight: 700; font-family: 'Courier New', monospace;
+  letter-spacing: 0.10em; text-transform: uppercase;
+}
+.badge-green  { background:var(--badge-green-bg);  color:var(--badge-green-fg);  border:1px solid var(--badge-green-brd); }
+.badge-red    { background:var(--badge-red-bg);    color:var(--badge-red-fg);    border:1px solid var(--badge-red-brd); }
+.badge-orange { background:var(--badge-orange-bg); color:var(--badge-orange-fg); border:1px solid var(--badge-orange-brd); }
+.badge-yellow { background:var(--badge-yellow-bg); color:var(--badge-yellow-fg); border:1px solid var(--badge-yellow-brd); }
+.badge-gray   { background:var(--badge-gray-bg);   color:var(--badge-gray-fg);   border:1px solid var(--badge-gray-brd); }
+.badge-blue   { background:var(--badge-blue-bg);   color:var(--badge-blue-fg);   border:1px solid var(--badge-blue-brd); }
+.badge-purple { background:var(--badge-purple-bg); color:var(--badge-purple-fg); border:1px solid var(--badge-purple-brd); }
+
+.btn-primary {
+  background: var(--accent); color: #fff; border: 1px solid var(--accent);
+  border-radius: 2px; padding: 6px 14px; font-size: 11px;
+  font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase;
+  transition: all 0.15s;
+}
+.btn-primary:hover { filter: brightness(1.15); }
+.btn-ghost {
+  background: rgba(255,255,255,0.05); color: var(--text-secondary);
+  border: 1px solid var(--border); border-radius: 2px; padding: 5px 12px;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase;
+  transition: all 0.15s;
+}
+.btn-ghost:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.btn-ghost.active { background: var(--accent-subtle); border-color: var(--accent-border); color: var(--accent); }
+
+/* KPI Cards */
+.kpi-grid { display: grid; gap: 12px; }
+.kpi-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 3px; padding: 14px 16px;
+  box-shadow: var(--card-shadow); position: relative; overflow: hidden;
+}
+.kpi-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+}
+.kpi-card.green::before { background: var(--green); }
+.kpi-card.red::before   { background: var(--red); }
+.kpi-card.orange::before{ background: var(--orange); }
+.kpi-card.yellow::before{ background: var(--yellow); }
+.kpi-card.blue::before  { background: var(--accent); }
+.kpi-label {
+  font-size: 9px; font-family: 'Courier New', monospace;
+  font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 6px;
+}
+.kpi-value {
+  font-size: 26px; font-weight: 900; line-height: 1;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  animation: count-up 0.4s ease;
+}
+.kpi-value.green  { color: var(--green); }
+.kpi-value.red    { color: var(--red); }
+.kpi-value.orange { color: var(--orange); }
+.kpi-value.yellow { color: var(--yellow); }
+.kpi-value.blue   { color: var(--accent); }
+.kpi-sub { font-size: 10px; color: var(--text-dim); margin-top: 4px; }
+.kpi-delta { font-size: 9px; font-weight: 700; margin-top: 4px; }
+.kpi-delta.up   { color: var(--red); }
+.kpi-delta.down { color: var(--green); }
+
+/* Tables */
+.data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.data-table th {
+  background: var(--bg-table-head); color: var(--text-table-head);
+  font-size: 9px; font-family: 'Courier New', monospace; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 7px 12px; text-align: left;
+  border-bottom: 1px solid var(--border-head); white-space: nowrap;
+}
+.data-table td {
+  padding: 8px 12px; border-bottom: 1px solid var(--border-table);
+  color: var(--text-primary);
+}
+.data-table tr:nth-child(odd) td { background: var(--bg-alt-row); }
+.data-table tr:hover td { background: var(--bg-table-hover); }
+.data-table tr.expanded-row td { background: rgba(0,122,179,0.06); border-top: 1px solid var(--accent-border); }
+
+/* Tabs */
+.tab-bar {
+  display: flex; gap: 2px; border-bottom: 1px solid var(--border);
+  margin-bottom: 16px; flex-wrap: wrap;
+}
+.tab-btn {
+  background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--text-muted); padding: 8px 14px; font-size: 11px;
+  font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+  transition: all 0.15s; cursor: pointer;
+}
+.tab-btn:hover { color: var(--text-secondary); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: slide-in 0.2s ease; }
+
+/* Donut chart (pure CSS/SVG) */
+.donut-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+.donut-center {
+  position: absolute; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; pointer-events: none;
+}
+.donut-center-val { font-size: 18px; font-weight: 900; color: var(--text-heading); line-height: 1; }
+.donut-center-lbl { font-size: 8px; color: var(--text-dim); font-family: 'Courier New', monospace; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* Filter bar */
+.filter-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+.filter-label { font-size: 9px; font-family: 'Courier New', monospace; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
+select.filter-select {
+  background: var(--bg-input); border: 1px solid var(--border);
+  color: var(--text-primary); border-radius: 2px; padding: 5px 10px;
+  font-size: 11px; font-family: inherit; cursor: pointer;
+}
+select.filter-select:focus { outline: none; border-color: var(--accent); }
+input.filter-search {
+  background: var(--bg-input); border: 1px solid var(--border);
+  color: var(--text-primary); border-radius: 2px; padding: 5px 10px;
+  font-size: 11px; font-family: inherit; min-width: 180px;
+}
+input.filter-search::placeholder { color: var(--text-dim); }
+input.filter-search:focus { outline: none; border-color: var(--accent); }
+
+/* Signal row (Watchlist style) */
+.signal-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; border-bottom: 1px solid var(--border-table);
+  cursor: pointer; transition: background 0.12s;
+}
+.signal-row:hover { background: var(--bg-table-hover); }
+.signal-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.signal-name { font-size: 12px; font-weight: 600; color: var(--text-primary); flex: 1; }
+.signal-count { font-size: 18px; font-weight: 900; font-family: 'Segoe UI', sans-serif; min-width: 48px; text-align: right; }
+.signal-exposure { font-size: 11px; font-weight: 700; min-width: 90px; text-align: right; color: var(--text-muted); }
+.signal-desc { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+
+/* Reconciliation source card */
+.source-card {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-bottom: 1px solid var(--border-table);
+}
+.source-icon { font-size: 16px; flex-shrink: 0; }
+.source-info { flex: 1; }
+.source-name { font-size: 11px; font-weight: 700; color: var(--text-primary); }
+.source-detail { font-size: 10px; color: var(--text-dim); }
+.source-age { font-size: 9px; font-family: 'Courier New', monospace; color: var(--text-muted); white-space: nowrap; }
+
+/* Progress bar */
+.prog-bar { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
+
+/* Chat bubble */
+.chat-msg { margin-bottom: 14px; animation: slide-in 0.2s ease; }
+.chat-msg.user { display: flex; justify-content: flex-end; }
+.chat-msg.assistant { display: flex; justify-content: flex-start; }
+.bubble {
+  max-width: 82%; padding: 10px 14px; border-radius: 4px;
+  font-size: 12px; line-height: 1.6;
+}
+.bubble.user { background: var(--accent); color: #fff; }
+.bubble.assistant {
+  background: var(--bg-card); border: 1px solid var(--border);
+  color: var(--text-primary);
+}
+.bubble .tool-call {
+  font-family: 'Courier New', monospace; font-size: 10px;
+  background: rgba(0,0,0,0.3); border-radius: 2px; padding: 6px 10px;
+  margin: 6px 0; border-left: 2px solid var(--accent); color: var(--text-muted);
+}
+.chat-input-row {
+  display: flex; gap: 8px; margin-top: 12px;
+}
+.chat-input {
+  flex: 1; background: var(--bg-input); border: 1px solid var(--border);
+  color: var(--text-primary); border-radius: 2px; padding: 8px 12px;
+  font-size: 12px; font-family: inherit; resize: none; height: 38px;
+}
+.chat-input:focus { outline: none; border-color: var(--accent); }
+
+/* Expose chip */
+.expose-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 2px; font-size: 11px; font-weight: 700;
+  border: 1px solid;
+}
+
+/* Divider */
+hr.dim { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
+/* OE bar chart row */
+.oe-bar-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; }
+.oe-bar-label { font-size: 10px; font-family: 'Courier New', monospace; font-weight: 700; color: var(--text-muted); width: 72px; flex-shrink: 0; }
+.oe-bar-track { flex: 1; height: 16px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; position: relative; }
+.oe-bar-fill { height: 100%; border-radius: 2px; display: flex; align-items: center; padding-left: 6px; transition: width 0.8s ease; }
+.oe-bar-val { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.85); white-space: nowrap; }
+.oe-bar-count { font-size: 10px; color: var(--text-dim); width: 52px; text-align: right; flex-shrink: 0; }
+
+/* ── Slide 1: Dashboard ────────────────────────────────────────────────── */
+#slide-dashboard .fleet-grid { display:grid; grid-template-columns: repeat(4,1fr); gap:10px; margin-bottom:16px; }
+#slide-dashboard .oe-section { display:grid; grid-template-columns: 1fr 300px; gap:16px; }
+#slide-dashboard .anomaly-list { display:flex; flex-direction:column; gap:0; }
+
+/* ── Slide 2: Data Flow Architecture ──────────────────────────────────── */
+#slide-reconciliation .arch-canvas {
+  width: 100%; height: calc(100vh - 170px);
+  position: relative; overflow: hidden;
+}
+#arch-svg { width:100%; height:100%; }
+.arch-node {
+  cursor: pointer; transition: all 0.18s;
+}
+.arch-node rect {
+  fill: rgba(0,28,70,0.75); stroke: rgba(255,255,255,0.14);
+  stroke-width: 1; rx: 3; ry: 3;
+  transition: all 0.18s;
+}
+.arch-node:hover rect, .arch-node.hovered rect {
+  fill: rgba(0,50,110,0.90); stroke: rgba(0,122,179,0.8);
+  stroke-width: 1.5;
+}
+.arch-node.signal-node rect { fill: rgba(0,24,60,0.80); }
+.arch-node.signal-node:hover rect, .arch-node.signal-node.hovered rect {
+  fill: rgba(0,50,110,0.90); stroke: rgba(0,122,179,0.8);
+}
+.arch-node.hub-node rect {
+  fill: rgba(0,40,100,0.90); stroke: rgba(0,122,179,0.55);
+  stroke-width: 1.5;
+}
+.arch-path {
+  fill: none; stroke: rgba(255,255,255,0.13);
+  stroke-width: 1.5; transition: all 0.18s;
+}
+.arch-path.active {
+  stroke: #007ab3; stroke-width: 2.5;
+  filter: drop-shadow(0 0 4px rgba(0,122,179,0.7));
+}
+.arch-path.signal-active {
+  stroke: #30d878; stroke-width: 2;
+  filter: drop-shadow(0 0 4px rgba(48,216,120,0.5));
+}
+.node-title { font-size: 11px; font-weight: 700; fill: #dce9ff; }
+.node-sub   { font-size: 9px;  fill: rgba(160,192,224,0.65); }
+.node-sub.highlight { fill: #30d878; }
+.hub-title  { font-size: 11px; font-weight: 700; fill: #007ab3; letter-spacing: 0.12em; text-transform: uppercase; }
+.hub-sub    { font-size: 9px;  fill: rgba(0,122,179,0.75); letter-spacing: 0.1em; text-transform: uppercase; }
+.sig-count  { font-size: 10px; fill: rgba(160,192,224,0.55); }
+.sig-count.red    { fill: #ff8c20; }
+.sig-count.green  { fill: #30d878; }
+.arch-label {
+  font-size: 8px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+  fill: rgba(160,192,224,0.35);
+}
+.scope-toggle-row { display:flex; gap:8px; margin-bottom:10px; align-items:center; }
+#arch-tooltip {
+  position: absolute; pointer-events: none;
+  background: rgba(0,12,40,0.95); border: 1px solid rgba(0,122,179,0.5);
+  border-radius: 3px; padding: 8px 12px; font-size: 11px;
+  color: var(--text-primary); max-width: 240px; line-height: 1.5;
+  backdrop-filter: blur(8px); display: none; z-index: 10;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+}
+
+/* ── Slide 3: Watchlist ───────────────────────────────────────────────── */
+#slide-watchlist .watch-layout { display:grid; grid-template-columns:220px 1fr; gap:0; height:calc(100vh - 180px); }
+#slide-watchlist .watch-sidebar { border-right:1px solid var(--border); overflow-y:auto; }
+#slide-watchlist .watch-sidebar::-webkit-scrollbar { width:3px; }
+#slide-watchlist .watch-sidebar::-webkit-scrollbar-thumb { background:#003781; }
+#slide-watchlist .watch-main { padding: 0 0 0 16px; overflow-y:auto; }
+.sidebar-group-label {
+  font-size:8px; font-family:'Courier New',monospace; font-weight:700;
+  letter-spacing:0.14em; text-transform:uppercase; color:var(--text-dim);
+  padding:10px 12px 4px;
+}
+.sidebar-item {
+  display:flex; align-items:center; gap:8px; padding:7px 12px;
+  cursor:pointer; transition:background 0.12s; border-radius:2px;
+}
+.sidebar-item:hover { background:rgba(255,255,255,0.04); }
+.sidebar-item.active { background:var(--accent-subtle); }
+.sidebar-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.sidebar-name { font-size:11px; color:var(--text-secondary); flex:1; line-height:1.3; }
+.sidebar-cnt { font-size:11px; font-weight:700; font-family:'Courier New',monospace; }
+.sidebar-item.active .sidebar-name { color:var(--text-primary); }
+.signal-detail-header {
+  display:flex; align-items:flex-start; gap:12px;
+  padding:0 0 14px; border-bottom:1px solid var(--border); margin-bottom:14px;
+}
+.signal-big-count { font-size:40px; font-weight:900; line-height:1; }
+.signal-info-block { flex:1; }
+.signal-title { font-size:15px; font-weight:700; color:var(--text-heading); margin-bottom:3px; }
+.signal-description { font-size:11px; color:var(--text-dim); line-height:1.5; }
+.signal-exposure-tag {
+  font-size:12px; font-weight:700; padding:5px 12px;
+  border:1px solid; border-radius:2px; white-space:nowrap;
+  align-self:flex-start;
+}
+
+/* ── Slide 4: AI Assistant ────────────────────────────────────────────── */
+#slide-assistant .chat-area {
+  height:calc(100vh - 260px); overflow-y:auto; padding-right:6px;
+  display:flex; flex-direction:column;
+}
+#slide-assistant .chat-area::-webkit-scrollbar { width:4px; }
+#slide-assistant .chat-area::-webkit-scrollbar-thumb { background:#003781; border-radius:2px; }
+.suggestion-chip {
+  display:inline-block; background:var(--bg-panel); border:1px solid var(--border);
+  border-radius:2px; padding:5px 10px; font-size:10px; color:var(--text-secondary);
+  cursor:pointer; transition:all 0.15s; margin:3px;
+}
+.suggestion-chip:hover { border-color:var(--accent-border); color:var(--accent); background:var(--accent-subtle); }
+.typing-dot {
+  width:6px; height:6px; border-radius:50%; background:var(--accent);
+  animation:pulse-dot 1.2s infinite; display:inline-block; margin:0 2px;
+}
+.typing-dot:nth-child(2) { animation-delay:0.2s; }
+.typing-dot:nth-child(3) { animation-delay:0.4s; }
+
+/* ── OE Mission Control globe ─────────────────────────────────────────── */
+@keyframes omcPulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.65);opacity:0.35} }
+@keyframes omcRing  { 0%{transform:scale(1);opacity:0.8} 100%{transform:scale(3);opacity:0} }
+@keyframes omcSelect{ 0%{transform:scale(0.7);opacity:0} 60%{transform:scale(1.15)} 100%{transform:scale(1);opacity:1} }
+@keyframes omcPanelIn{ from{opacity:0;transform:translateX(8px)} to{opacity:1;transform:translateX(0)} }
+.omc-pin{display:flex;flex-direction:column;align-items:center;cursor:pointer;user-select:none;
+  filter:drop-shadow(0 2px 10px rgba(0,0,0,0.8));pointer-events:all;transition:opacity 0.15s,transform 0.15s;}
+.omc-pin:hover{opacity:0.9;transform:translateY(-3px);}
+.omc-pin-active .omc-label{animation:omcSelect 0.35s ease-out both;}
+#omc-globe canvas{outline:none;}
+#omc-detail{animation:omcPanelIn 0.2s ease-out both;}
+.omc-kpi-tile{background:var(--bg-panel);border:1px solid var(--border);border-radius:4px;padding:6px 8px;text-align:center;}
+.omc-kpi-tile .v{font-family:'Courier New',monospace;font-size:15px;font-weight:700;}
+.omc-kpi-tile .l{font-size:8px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em;margin-top:2px;}
+.omc-oe-btn{background:var(--bg-panel);border:1px solid var(--border);border-radius:4px;padding:6px 8px;cursor:pointer;
+  text-align:left;transition:border-color 0.15s,background 0.15s;}
+.omc-oe-btn:hover{border-color:var(--accent-border);background:var(--accent-subtle);}
+</style>
+</head>
+<body>
+<div id="shell">
+
+<!-- ── Demo disclosure banner ─────────────────────────────────────────── -->
+<div id="demo-banner">Demo Only &mdash; Sample Data · All figures, dollar amounts, and metrics shown are illustrative and do not reflect real financials or fleet state</div>
+
+<!-- ── Top bar ─────────────────────────────────────────────────────────── -->
+<header id="topbar">
+  <div class="logo-area">
+    <div class="allianz-eagle">A</div>
+    <h1>Workplace Prime Hub</h1>
+    <span class="version-chip">v3.16.0</span>
+  </div>
+  <div id="nav-controls">
+    <button class="nav-arrow" id="btn-prev" onclick="navigate(-1)">&#8592;</button>
+    <span id="slide-counter">1 / 4</span>
+    <button class="nav-arrow" id="btn-next" onclick="navigate(1)">&#8594;</button>
+  </div>
+  <div class="spacer"></div>
+  <button class="topbar-btn" onclick="toggleNotes()" id="notes-toggle-btn">&#9741; Notes</button>
+  <button class="topbar-btn" id="present-btn" onclick="togglePresent()">&#9654; Present</button>
+</header>
+
+<!-- ── Main area ───────────────────────────────────────────────────────── -->
+<div id="main-area">
+
+  <!-- Slide strip -->
+  <nav id="slide-strip">
+    <div class="thumb active" onclick="goTo(0)">
+      <div class="thumb-num">01</div>
+      <div class="thumb-icon">📊</div>
+      <div class="thumb-title">Fleet Dashboard</div>
+    </div>
+    <div class="thumb" onclick="goTo(1)">
+      <div class="thumb-num">02</div>
+      <div class="thumb-icon">💰</div>
+      <div class="thumb-title">Billing Reconciliation</div>
+    </div>
+    <div class="thumb" onclick="goTo(2)">
+      <div class="thumb-num">03</div>
+      <div class="thumb-icon">⚠️</div>
+      <div class="thumb-title">Anomaly Watchlist</div>
+    </div>
+    <div class="thumb" onclick="goTo(3)">
+      <div class="thumb-num">04</div>
+      <div class="thumb-icon">🧭</div>
+      <div class="thumb-title">Department Journey</div>
+    </div>
+    <div class="thumb" onclick="goTo(4)">
+      <div class="thumb-num">05</div>
+      <div class="thumb-icon">🤖</div>
+      <div class="thumb-title">AI Assistant</div>
+    </div>
+    <div class="thumb" onclick="goTo(5)">
+      <div class="thumb-num">06</div>
+      <div class="thumb-icon">🏗️</div>
+      <div class="thumb-title">AI Architecture</div>
+    </div>
+    <div class="thumb" onclick="goTo(6)">
+      <div class="thumb-num">07</div>
+      <div class="thumb-icon">🛡️</div>
+      <div class="thumb-title">Compare Accounts</div>
+    </div>
+    <div class="thumb" onclick="goTo(7)">
+      <div class="thumb-num">08</div>
+      <div class="thumb-icon">🧑‍💼</div>
+      <div class="thumb-title">ATA Users Report</div>
+    </div>
+    <div class="thumb" onclick="goTo(8)">
+      <div class="thumb-num">09</div>
+      <div class="thumb-icon">📋</div>
+      <div class="thumb-title">Policy Intelligence</div>
+    </div>
+  </nav>
+
+  <!-- Viewport -->
+  <main id="slide-viewport">
+
+    <!-- ════════════════════════════════════════════════════════════════
+         SLIDE 1 — Fleet Dashboard
+         ════════════════════════════════════════════════════════════════ -->
+    <section class="slide active" id="slide-dashboard">
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:4px;">
+        <h2 class="slide-title">Fleet Dashboard</h2>
+        <span class="badge badge-orange">DEMO DATA</span>
+        <span style="margin-left:auto;font-size:10px;color:var(--text-dim);font-family:'Courier New',monospace;">Sample snapshot · 11,995 devices</span>
+      </div>
+      <p class="slide-subtitle">NA-scoped KPI summary across all managed device types — AMC, AVCC, EMS</p>
+
+      <!-- Filter bar -->
+      <div class="filter-bar">
+        <span class="filter-label">View</span>
+        <select class="filter-select" id="dash-scope" onchange="updateDashScope(this.value)">
+          <option value="na">NA Only (9 OEs)</option>
+          <option value="all">All Intune (Global)</option>
+        </select>
+        <span class="filter-label" style="margin-left:8px;">Type</span>
+        <button class="btn-ghost active" id="filter-amc"   onclick="dashFilter('amc')">AMC</button>
+        <button class="btn-ghost active" id="filter-avcc"  onclick="dashFilter('avcc')">AVCC</button>
+        <button class="btn-ghost active" id="filter-ems"   onclick="dashFilter('ems')">EMS</button>
+      </div>
+
+      <!-- KPI strip -->
+      <div class="kpi-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:16px;">
+        <div class="kpi-card blue">
+          <div class="kpi-label">NA Managed</div>
+          <div class="kpi-value blue" id="kpi-total">11,995</div>
+          <div class="kpi-sub">of 80,982 global</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-label">Compliant</div>
+          <div class="kpi-value green" id="kpi-compliant">81%</div>
+          <div class="kpi-sub">9,682 / 11,995</div>
+          <div class="kpi-delta down">↑ +2pp vs prior</div>
+        </div>
+        <div class="kpi-card red">
+          <div class="kpi-label">Noncompliant</div>
+          <div class="kpi-value red" id="kpi-noncomp">427</div>
+          <div class="kpi-sub">4% of managed</div>
+          <div class="kpi-delta up">↓ -1pp vs prior</div>
+        </div>
+        <div class="kpi-card orange">
+          <div class="kpi-label">Stale &gt;30d</div>
+          <div class="kpi-value orange" id="kpi-stale">404</div>
+          <div class="kpi-sub">3% of managed</div>
+        </div>
+        <div class="kpi-card yellow">
+          <div class="kpi-label">Anomalies</div>
+          <div class="kpi-value yellow" id="kpi-anomaly">1,337</div>
+          <div class="kpi-sub">non-std · no user · new</div>
+        </div>
+      </div>
+
+      <!-- OE breakdown + anomaly watchlist -->
+      <div id="slide-dashboard" style="display:grid;grid-template-columns:1fr 310px;gap:16px;">
+
+        <!-- OE breakdown -->
+        <div class="card">
+          <div class="section-label" style="display:flex;align-items:center;justify-content:space-between;">
+            <span>OE Mission Control — Device Fleet by Operating Entity</span>
+            <span style="font-size:9px;color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0;">click a pin · auto-rotating</span>
+          </div>
+          <div id="omc-wrap" style="display:flex;gap:14px;align-items:stretch;min-height:300px;">
+            <div id="omc-globe" style="width:300px;height:300px;flex:0 0 300px;position:relative;border-radius:8px;overflow:hidden;background:radial-gradient(circle at 50% 40%,rgba(0,122,179,0.12),transparent 70%);"></div>
+            <div id="omc-detail" style="flex:1;min-width:0;"></div>
+          </div>
+          <div class="section-label" style="margin-top:12px;">Bar breakdown</div>
+          <div id="oe-bars">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Anomaly watchlist -->
+        <div class="card card-sm">
+          <div class="section-label">Anomaly Watchlist</div>
+          <div style="display:flex;flex-direction:column;gap:0;">
+            <div class="signal-row" onclick="toggleAnomalyDetail('non-std')" style="cursor:pointer;">
+              <div class="signal-dot" style="background:var(--orange);box-shadow:0 0 6px var(--orange);"></div>
+              <div style="flex:1;">
+                <div class="signal-name">Non-standard names</div>
+                <div class="signal-desc">Devices not matching AMC-D-* / AMC-M-* / VPDW*</div>
+              </div>
+              <span class="badge badge-orange">312</span>
+            </div>
+            <div id="detail-non-std" style="display:none;padding:10px 14px;background:rgba(255,140,32,0.06);border-bottom:1px solid var(--border-table);">
+              <div style="font-size:11px;color:var(--text-secondary);margin-bottom:6px;">Top offenders by OE:</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <span class="badge badge-orange">AZL: 89</span>
+                <span class="badge badge-orange">ATA: 67</span>
+                <span class="badge badge-orange">AGCS: 54</span>
+                <span class="badge badge-gray">AZRA: 41</span>
+                <span class="badge badge-gray">AP-US: 38</span>
+                <span class="badge badge-gray">others: 23</span>
+              </div>
+              <div style="font-size:10px;color:var(--text-dim);margin-top:6px;">&#9432; Remediation: rename via Intune Device Name template or local policy</div>
+            </div>
+
+            <div class="signal-row" onclick="toggleAnomalyDetail('no-user')">
+              <div class="signal-dot" style="background:var(--red);box-shadow:0 0 6px var(--red);"></div>
+              <div style="flex:1;">
+                <div class="signal-name">No primary user</div>
+                <div class="signal-desc">Enrolled devices with empty UPN</div>
+              </div>
+              <span class="badge badge-red">418</span>
+            </div>
+            <div id="detail-no-user" style="display:none;padding:10px 14px;background:rgba(255,80,80,0.06);border-bottom:1px solid var(--border-table);">
+              <div style="font-size:11px;color:var(--text-secondary);margin-bottom:6px;">High severity — devices may be unmanaged. OE breakdown:</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <span class="badge badge-red">AGCS: 201</span>
+                <span class="badge badge-red">AZL: 112</span>
+                <span class="badge badge-orange">ATA: 58</span>
+                <span class="badge badge-gray">others: 47</span>
+              </div>
+              <div style="font-size:10px;color:var(--text-dim);margin-top:6px;">&#9432; Remediation: assign primary user in Intune → Devices → Properties</div>
+            </div>
+
+            <div class="signal-row" onclick="toggleAnomalyDetail('new-enroll')">
+              <div class="signal-dot" style="background:var(--blue);box-shadow:0 0 6px var(--blue);"></div>
+              <div style="flex:1;">
+                <div class="signal-name">Recently enrolled (&lt;7d)</div>
+                <div class="signal-desc">New devices enrolled in last 7 days</div>
+              </div>
+              <span class="badge badge-blue">117</span>
+            </div>
+            <div id="detail-new-enroll" style="display:none;padding:10px 14px;background:rgba(96,165,250,0.06);border-bottom:1px solid var(--border-table);">
+              <div style="font-size:11px;color:var(--text-secondary);margin-bottom:6px;">Informational — normal enrollment activity. Latest 5:</div>
+              <table class="data-table" style="font-size:10px;">
+                <thead><tr><th>Device</th><th>OE</th><th>Enrolled</th></tr></thead>
+                <tbody>
+                  <tr><td>AMC-D-ATA-10892</td><td>ATA</td><td>2026-06-28</td></tr>
+                  <tr><td>AMC-M-AZL-00341</td><td>AZL</td><td>2026-06-27</td></tr>
+                  <tr><td>VPDW-AGCS-00229</td><td>AGCS</td><td>2026-06-27</td></tr>
+                  <tr><td>AMC-D-AZRA-01189</td><td>AZRA</td><td>2026-06-26</td></tr>
+                  <tr><td>AMC-D-AP-US-08821</td><td>AP-US</td><td>2026-06-25</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
+            <div class="section-label" style="margin-bottom:8px;">Compliance by Type</div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px;">
+                  <span style="color:var(--text-muted);">AMC Windows</span>
+                  <span style="font-weight:700;color:var(--green);">88%</span>
+                </div>
+                <div class="prog-bar"><div class="prog-fill" style="width:88%;background:var(--green);"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px;">
+                  <span style="color:var(--text-muted);">AMC macOS</span>
+                  <span style="font-weight:700;color:var(--green);">91%</span>
+                </div>
+                <div class="prog-bar"><div class="prog-fill" style="width:91%;background:var(--green);"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px;">
+                  <span style="color:var(--text-muted);">AVCC Windows</span>
+                  <span style="font-weight:700;color:var(--yellow);">73%</span>
+                </div>
+                <div class="prog-bar"><div class="prog-fill" style="width:73%;background:var(--yellow);"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px;">
+                  <span style="color:var(--text-muted);">EMS / Mobile</span>
+                  <span style="font-weight:700;color:var(--orange);">61%</span>
+                </div>
+                <div class="prog-bar"><div class="prog-fill" style="width:61%;background:var(--orange);"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════════
+         SLIDE 2 — Data Flow Architecture
+         ════════════════════════════════════════════════════════════════ -->
+    <section class="slide" id="slide-reconciliation">
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:4px;">
+        <h2 class="slide-title">Reconciliation Engine</h2>
+        <span class="badge badge-orange">DEMO DATA</span>
+        <div style="margin-left:auto;display:flex;gap:6px;align-items:center;">
+          <button class="btn-ghost active" id="scope-na" onclick="setArchScope('na')" style="font-size:9px;padding:3px 10px;">NA</button>
+          <button class="btn-ghost" id="scope-all" onclick="setArchScope('all')" style="font-size:9px;padding:3px 10px;">ALL</button>
+        </div>
+      </div>
+      <p class="slide-subtitle" style="margin-bottom:10px;">DATA FLOW ARCHITECTURE — HOVER ANY NODE TO TRACE ITS PATH</p>
+
+      <div class="arch-canvas" id="arch-canvas">
+        <svg id="arch-svg" viewBox="0 0 960 520" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <marker id="arrow" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+              <polygon points="0 0, 7 3.5, 0 7" fill="rgba(255,255,255,0.18)" id="arrow-marker"/>
+            </marker>
+            <marker id="arrow-active" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+              <polygon points="0 0, 7 3.5, 0 7" fill="#007ab3"/>
+            </marker>
+            <marker id="arrow-signal" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+              <polygon points="0 0, 7 3.5, 0 7" fill="#30d878"/>
+            </marker>
+          </defs>
+
+          <!-- Column labels -->
+          <text x="150" y="22" class="arch-label" text-anchor="middle">DATA SOURCES</text>
+          <text x="800" y="22" class="arch-label" text-anchor="middle">SIGNALS</text>
+
+          <!-- ── SOURCE NODES (left column) ── -->
+          <!-- Microsoft Intune -->
+          <g class="arch-node source-node" id="src-intune" onmouseenter="hoverNode('intune')" onmouseleave="clearHover()">
+            <rect x="20" y="35" width="250" height="48" rx="3"/>
+            <text x="36" y="55" class="node-title">Microsoft Intune</text>
+            <text x="36" y="70" class="node-sub" id="sub-intune">1,965 NA devices</text>
+            <circle cx="280" cy="59" r="5" fill="#30d878"/>
+          </g>
+          <!-- AMDB -->
+          <g class="arch-node source-node" id="src-amdb" onmouseenter="hoverNode('amdb')" onmouseleave="clearHover()">
+            <rect x="20" y="95" width="250" height="48" rx="3"/>
+            <text x="36" y="115" class="node-title">AMDB</text>
+            <text x="36" y="130" class="node-sub" id="sub-amdb">1,630 assets · 707 billable</text>
+            <circle cx="280" cy="119" r="5" fill="#30d878"/>
+          </g>
+          <!-- ServiceNow AMC SI -->
+          <g class="arch-node source-node" id="src-amc-si" onmouseenter="hoverNode('amc-si')" onmouseleave="clearHover()">
+            <rect x="20" y="155" width="250" height="48" rx="3"/>
+            <text x="36" y="175" class="node-title">ServiceNow AMC SI</text>
+            <text x="36" y="190" class="node-sub">776 SI records</text>
+            <circle cx="280" cy="179" r="5" fill="#30d878"/>
+          </g>
+          <!-- ServiceNow AVCC SI -->
+          <g class="arch-node source-node" id="src-avcc-si" onmouseenter="hoverNode('avcc-si')" onmouseleave="clearHover()">
+            <rect x="20" y="215" width="250" height="48" rx="3"/>
+            <text x="36" y="235" class="node-title">ServiceNow AVCC SI</text>
+            <text x="36" y="250" class="node-sub">450 SI records</text>
+            <circle cx="280" cy="239" r="5" fill="#30d878"/>
+          </g>
+          <!-- ServiceNow EMS SI -->
+          <g class="arch-node source-node" id="src-ems-si" onmouseenter="hoverNode('ems-si')" onmouseleave="clearHover()">
+            <rect x="20" y="275" width="250" height="48" rx="3"/>
+            <text x="36" y="295" class="node-title">ServiceNow EMS SI</text>
+            <text x="36" y="310" class="node-sub">541 SI records</text>
+            <circle cx="280" cy="299" r="5" fill="#30d878"/>
+          </g>
+          <!-- SAP O2C -->
+          <g class="arch-node source-node" id="src-o2c" onmouseenter="hoverNode('o2c')" onmouseleave="clearHover()">
+            <rect x="20" y="335" width="250" height="48" rx="3"/>
+            <text x="36" y="355" class="node-title">SAP O2C Revenue</text>
+            <text x="36" y="370" class="node-sub" id="sub-o2c">4 months · $422,570 WPS (NA)</text>
+            <circle cx="280" cy="359" r="5" fill="#30d878"/>
+          </g>
+          <!-- Verizon / AT&T -->
+          <g class="arch-node source-node" id="src-carrier" onmouseenter="hoverNode('carrier')" onmouseleave="clearHover()">
+            <rect x="20" y="395" width="250" height="48" rx="3"/>
+            <text x="36" y="415" class="node-title">Verizon / AT&amp;T</text>
+            <text x="36" y="430" class="node-sub">139 lines · VZ + AT&amp;T</text>
+            <circle cx="280" cy="419" r="5" fill="#f5cc40"/>
+          </g>
+          <!-- Apple ABM -->
+          <g class="arch-node source-node" id="src-abm" onmouseenter="hoverNode('abm')" onmouseleave="clearHover()">
+            <rect x="20" y="455" width="250" height="48" rx="3"/>
+            <text x="36" y="475" class="node-title">Apple Business Manager</text>
+            <text x="36" y="490" class="node-sub">212 NA devices · 44 historical</text>
+            <circle cx="280" cy="479" r="5" fill="#30d878"/>
+          </g>
+
+          <!-- ── HUB (center) ── -->
+          <g class="arch-node hub-node" id="hub-center" onmouseenter="hoverNode('hub')" onmouseleave="clearHover()">
+            <rect x="390" y="200" width="140" height="100" rx="4"/>
+            <text x="460" y="240" class="hub-title" text-anchor="middle">HUB</text>
+            <text x="460" y="256" class="hub-sub" text-anchor="middle">RECONCILIATION</text>
+            <text x="460" y="270" class="hub-sub" text-anchor="middle">ENGINE</text>
+          </g>
+
+          <!-- ── SIGNAL NODES (right column) ── -->
+          <!-- Hardware · Not in Intune -->
+          <g class="arch-node signal-node" id="sig-bni" onmouseenter="hoverNode('bni')" onmouseleave="clearHover()">
+            <rect x="620" y="35" width="300" height="48" rx="3"/>
+            <text x="636" y="55" class="node-title">Hardware · Not in Intune</text>
+            <text x="636" y="70" class="sig-count red">216 findings</text>
+            <circle cx="626" cy="59" r="5" fill="#ff8c20"/>
+          </g>
+          <!-- Stale Still Billed -->
+          <g class="arch-node signal-node" id="sig-stale" onmouseenter="hoverNode('stale')" onmouseleave="clearHover()">
+            <rect x="620" y="95" width="300" height="48" rx="3"/>
+            <text x="636" y="115" class="node-title">Stale · Still Billed</text>
+            <text x="636" y="130" class="sig-count red">29 findings · $1,053/mo</text>
+            <circle cx="626" cy="119" r="5" fill="#ff5050"/>
+          </g>
+          <!-- SI Coverage Gaps -->
+          <g class="arch-node signal-node" id="sig-si-gap" onmouseenter="hoverNode('si-gap')" onmouseleave="clearHover()">
+            <rect x="620" y="155" width="300" height="48" rx="3"/>
+            <text x="636" y="175" class="node-title">SI Coverage Gaps</text>
+            <text x="636" y="190" class="sig-count red">121 findings</text>
+            <circle cx="626" cy="179" r="5" fill="#a78bfa"/>
+          </g>
+          <!-- Active No SI -->
+          <g class="arch-node signal-node" id="sig-active-no-si" onmouseenter="hoverNode('active-no-si')" onmouseleave="clearHover()">
+            <rect x="620" y="215" width="300" height="48" rx="3"/>
+            <text x="636" y="235" class="node-title">Active · No SI</text>
+            <text x="636" y="250" class="sig-count red">171 findings</text>
+            <circle cx="626" cy="239" r="5" fill="#ff5050"/>
+          </g>
+          <!-- Billed No SI -->
+          <g class="arch-node signal-node" id="sig-billed-no-si" onmouseenter="hoverNode('billed-no-si')" onmouseleave="clearHover()">
+            <rect x="620" y="275" width="300" height="48" rx="3"/>
+            <text x="636" y="295" class="node-title">Billed · No SI</text>
+            <text x="636" y="310" class="sig-count red">430 findings</text>
+            <circle cx="626" cy="299" r="5" fill="#ff8c20"/>
+          </g>
+          <!-- O2C Qty Delta -->
+          <g class="arch-node signal-node" id="sig-o2c" onmouseenter="hoverNode('o2c-sig')" onmouseleave="clearHover()">
+            <rect x="620" y="335" width="300" height="48" rx="3"/>
+            <text x="636" y="355" class="node-title">O2C Qty Delta</text>
+            <text x="636" y="370" class="sig-count red">1 finding · $1,595/mo (AVCC admin)</text>
+            <circle cx="626" cy="359" r="5" fill="#a78bfa"/>
+          </g>
+          <!-- Warranty Mismatch -->
+          <g class="arch-node signal-node" id="sig-warranty" onmouseenter="hoverNode('warranty')" onmouseleave="clearHover()">
+            <rect x="620" y="395" width="300" height="48" rx="3"/>
+            <text x="636" y="415" class="node-title">Warranty Mismatch</text>
+            <text x="636" y="430" class="sig-count red">654 findings</text>
+            <circle cx="626" cy="419" r="5" fill="#f5cc40"/>
+          </g>
+          <!-- Carrier Billing -->
+          <g class="arch-node signal-node" id="sig-carrier" onmouseenter="hoverNode('carrier-sig')" onmouseleave="clearHover()">
+            <rect x="620" y="455" width="300" height="48" rx="3"/>
+            <text x="636" y="475" class="node-title">Carrier Billing</text>
+            <text x="636" y="490" class="sig-count">139 findings</text>
+            <circle cx="626" cy="479" r="5" fill="#60a5fa"/>
+          </g>
+
+          <!-- ── PATHS: sources → hub ── -->
+          <path id="path-intune-hub" class="arch-path" d="M280,59 C340,59 380,250 390,250" marker-end="url(#arrow)"/>
+          <path id="path-amdb-hub"   class="arch-path" d="M280,119 C340,119 380,250 390,250" marker-end="url(#arrow)"/>
+          <path id="path-amc-si-hub" class="arch-path" d="M280,179 C340,179 380,250 390,250" marker-end="url(#arrow)"/>
+          <path id="path-avcc-si-hub"class="arch-path" d="M280,239 C340,239 385,250 390,250" marker-end="url(#arrow)"/>
+          <path id="path-ems-si-hub" class="arch-path" d="M280,299 C340,299 385,250 390,250" marker-end="url(#arrow)"/>
+          <path id="path-o2c-hub"    class="arch-path" d="M280,359 C340,359 380,250 390,250" marker-end="url(#arrow)"/>
+          <path id="path-carrier-hub"class="arch-path" d="M280,419 C340,419 380,250 390,250" marker-end="url(#arrow)"/>
+          <path id="path-abm-hub"    class="arch-path" d="M280,479 C340,479 380,252 390,252" marker-end="url(#arrow)"/>
+
+          <!-- ── PATHS: hub → signals ── -->
+          <path id="path-hub-bni"          class="arch-path" d="M530,250 C570,250 590,59 620,59" marker-end="url(#arrow)"/>
+          <path id="path-hub-stale"        class="arch-path" d="M530,250 C570,250 590,119 620,119" marker-end="url(#arrow)"/>
+          <path id="path-hub-si-gap"       class="arch-path" d="M530,250 C570,250 590,179 620,179" marker-end="url(#arrow)"/>
+          <path id="path-hub-active-no-si" class="arch-path" d="M530,250 C570,250 590,239 620,239" marker-end="url(#arrow)"/>
+          <path id="path-hub-billed-no-si" class="arch-path" d="M530,250 C570,250 590,299 620,299" marker-end="url(#arrow)"/>
+          <path id="path-hub-o2c"          class="arch-path" d="M530,250 C570,250 590,359 620,359" marker-end="url(#arrow)"/>
+          <path id="path-hub-warranty"     class="arch-path" d="M530,252 C570,252 590,419 620,419" marker-end="url(#arrow)"/>
+          <path id="path-hub-carrier"      class="arch-path" d="M530,252 C570,252 590,479 620,479" marker-end="url(#arrow)"/>
+        </svg>
+        <div id="arch-tooltip"></div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════════
+         SLIDE 3 — Watchlist / Anomaly Signals
+         ════════════════════════════════════════════════════════════════ -->
+    <section class="slide" id="slide-watchlist">
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:4px;">
+        <h2 class="slide-title">Anomaly Watchlist</h2>
+        <span class="badge badge-orange">IT HYGIENE</span>
+        <span class="badge badge-red" style="margin-left:4px;">BILLING DISPUTES</span>
+      </div>
+      <p class="slide-subtitle">Signal-based triage across device hygiene, service charge integrity, and billing reconciliation</p>
+
+      <div class="watch-layout">
+        <!-- Sidebar -->
+        <div class="watch-sidebar card" style="padding:0;border-radius:3px 0 0 3px;">
+
+          <div style="padding:8px 12px;border-bottom:1px solid var(--border);display:flex;gap:4px;">
+            <button class="btn-ghost active" id="ws-hygiene" onclick="watchSection('hygiene')" style="font-size:9px;padding:3px 8px;">IT Hygiene</button>
+            <button class="btn-ghost" id="ws-billing" onclick="watchSection('billing')" style="font-size:9px;padding:3px 8px;">Billing</button>
+          </div>
+
+          <div id="sidebar-hygiene">
+            <div class="sidebar-group-label">Operations</div>
+            <div class="sidebar-item active" onclick="showSignal('stale_dups')">
+              <div class="sidebar-dot" style="background:#fb923c;"></div>
+              <div class="sidebar-name">Stale Duplicates</div>
+              <span class="sidebar-cnt" style="color:#fb923c;">5</span>
+            </div>
+            <div class="sidebar-item" onclick="showSignal('no_device')">
+              <div class="sidebar-dot" style="background:#f87171;"></div>
+              <div class="sidebar-name">No Device for Group</div>
+              <span class="sidebar-cnt" style="color:#f87171;">37</span>
+            </div>
+            <div class="sidebar-item" onclick="showSignal('orphaned')">
+              <div class="sidebar-dot" style="background:#fbbf24;"></div>
+              <div class="sidebar-name">Orphaned Devices</div>
+              <span class="sidebar-cnt" style="color:#fbbf24;">20</span>
+            </div>
+            <div class="sidebar-item" onclick="showSignal('mdm_orphans')">
+              <div class="sidebar-dot" style="background:#f97316;"></div>
+              <div class="sidebar-name">Mobile: Group — No Device</div>
+              <span class="sidebar-cnt" style="color:#f97316;">9</span>
+            </div>
+
+            <div class="sidebar-group-label">AMC SI Integrity</div>
+            <div class="sidebar-item" onclick="showSignal('si_no_intune')">
+              <div class="sidebar-dot" style="background:#a78bfa;"></div>
+              <div class="sidebar-name">AMC SI — No Intune</div>
+              <span class="sidebar-cnt" style="color:#a78bfa;">724</span>
+            </div>
+            <div class="sidebar-item" onclick="showSignal('warranty_mismatch')">
+              <div class="sidebar-dot" style="background:#f5cc40;"></div>
+              <div class="sidebar-name">Warranty Mismatch</div>
+              <span class="sidebar-cnt" style="color:#f5cc40;">110</span>
+            </div>
+          </div>
+
+          <div id="sidebar-billing" style="display:none;">
+            <div class="sidebar-group-label">Active Charges</div>
+            <div class="sidebar-item active" onclick="showSignal('stale_billed')">
+              <div class="sidebar-dot" style="background:#ff5050;"></div>
+              <div class="sidebar-name">Stale SI Charge</div>
+              <span class="sidebar-cnt" style="color:#ff5050;">26</span>
+            </div>
+            <div class="sidebar-item" onclick="showSignal('dup_serial_si')">
+              <div class="sidebar-dot" style="background:#fb923c;"></div>
+              <div class="sidebar-name">Dup Serial — Active SI</div>
+              <span class="sidebar-cnt" style="color:#fb923c;">6</span>
+            </div>
+            <div class="sidebar-item" onclick="showSignal('stock_active_si')">
+              <div class="sidebar-dot" style="background:#f97316;"></div>
+              <div class="sidebar-name">In Stock — Active SI</div>
+              <span class="sidebar-cnt" style="color:#f97316;">11</span>
+            </div>
+            <div class="sidebar-group-label">EMS Disputes</div>
+            <div class="sidebar-item" onclick="showSignal('ems_si_no_device')">
+              <div class="sidebar-dot" style="background:#c084fc;"></div>
+              <div class="sidebar-name">EMS SI — No Device</div>
+              <span class="sidebar-cnt" style="color:#c084fc;">93</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main signal panel -->
+        <div class="watch-main">
+          <div id="signal-panel">
+            <!-- Populated by showSignal() -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════════
+         SLIDE 4 — Department Journey (By Department / By Manager)
+         ════════════════════════════════════════════════════════════════ -->
+    <section class="slide" id="slide-journey">
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:4px;">
+        <h2 class="slide-title">Department Journey</h2>
+        <span class="badge badge-orange">DEMO DATA</span>
+        <span class="badge badge-blue" style="margin-left:4px;">NA SCOPED</span>
+        <span style="margin-left:auto;font-size:10px;color:var(--text-dim);font-family:'Courier New',monospace;" id="journey-breadcrumb">By Department</span>
+      </div>
+      <p class="slide-subtitle">Device footprint rolled up by department and by manager, scoped to the 9 NA operating entities</p>
+
+      <!-- Tabs -->
+      <div class="tab-bar">
+        <button class="tab-btn active" id="jtab-dept"  onclick="journeyTab('dept')">By Department</button>
+        <button class="tab-btn" id="jtab-tower" onclick="journeyTab('tower')">By Manager</button>
+      </div>
+
+      <!-- KPI strip -->
+      <div class="kpi-grid" style="grid-template-columns:repeat(5,1fr);margin:14px 0;">
+        <div class="kpi-card blue"><div class="kpi-label">Devices</div><div class="kpi-value blue">69</div></div>
+        <div class="kpi-card blue"><div class="kpi-label">Departments</div><div class="kpi-value blue">9</div></div>
+        <div class="kpi-card red"><div class="kpi-label">Noncompliant</div><div class="kpi-value red">6</div></div>
+        <div class="kpi-card orange"><div class="kpi-label">Stale</div><div class="kpi-value orange">5</div></div>
+        <div class="kpi-card gray"><div class="kpi-label">Managers</div><div class="kpi-value gray">4</div></div>
+      </div>
+
+      <!-- DEPARTMENT tab -->
+      <div class="tab-content active" id="journey-dept">
+        <div class="card">
+          <div class="section-label">By Department</div>
+          <table class="data-table">
+            <thead><tr><th>Department</th><th>OE</th><th>Devices</th><th>Users</th><th>Compliant</th><th>Noncompliant</th><th>Stale</th><th>Top Manager</th></tr></thead>
+            <tbody id="dept-users-tbody"><!-- Populated by JS --></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- MANAGER tab -->
+      <div class="tab-content" id="journey-tower">
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div class="section-label" style="margin-bottom:0;">By Manager — Org Chart</div>
+            <button class="topbar-btn" id="mgr-view-toggle" onclick="toggleMgrView()" style="font-size:10px;">☰ FLAT TABLE VIEW</button>
+          </div>
+
+          <div id="mgr-tree-view">
+            <div id="mgr-tree-container"><!-- Populated by JS --></div>
+          </div>
+
+          <div id="mgr-table-view" style="display:none;">
+            <table class="data-table">
+              <thead><tr><th>Manager</th><th>Manager UPN</th><th>Devices</th><th>Active</th><th>Noncompliant</th><th>Departments</th></tr></thead>
+              <tbody id="tower-depts-tbody"><!-- Populated by JS --></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════════
+         SLIDE 5 — AI Assistant
+         ════════════════════════════════════════════════════════════════ -->
+    <section class="slide" id="slide-assistant">
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:4px;">
+        <h2 class="slide-title">Query Assistant</h2>
+        <span class="badge badge-blue">AWS BEDROCK</span>
+        <span class="badge badge-green" style="margin-left:4px;">45 TOOLS</span>
+      </div>
+      <p class="slide-subtitle">Ask natural-language questions about your device fleet, compliance, admins, billing, and mobile data</p>
+
+      <!-- Suggestions -->
+      <div style="margin-bottom:12px;">
+        <div class="section-label" style="margin-bottom:6px;">Try asking</div>
+        <div id="suggestions-row">
+          <span class="suggestion-chip" onclick="demoChat('Which OE has the most noncompliant devices?')">Which OE has the most noncompliant devices?</span>
+          <span class="suggestion-chip" onclick="demoChat('Give me a health scorecard for AZL')">Give me a health scorecard for AZL</span>
+          <span class="suggestion-chip" onclick="demoChat('How many devices are still on Windows 10?')">How many devices are still on Windows 10?</span>
+          <span class="suggestion-chip" onclick="demoChat('What\\'s the action plan for AGCS mobile?')">What's the action plan for AGCS mobile?</span>
+          <span class="suggestion-chip" onclick="demoChat('Which admins have stale devices?')">Which admins have stale devices?</span>
+          <span class="suggestion-chip" onclick="demoChat('Is the data ready to share?')">Is the data ready to share?</span>
+        </div>
+      </div>
+
+      <!-- Chat area -->
+      <div class="chat-area" id="chat-area">
+        <div class="chat-msg assistant">
+          <div class="bubble assistant">
+            <strong style="color:var(--accent);">Workplace Prime Hub AI</strong><br>
+            I have access to 11,995 NA-scoped devices across 9 operating entities, compliance data, admin reports, billing signals, and mobile fleet data. What would you like to know?
+          </div>
+        </div>
+      </div>
+
+      <!-- Input -->
+      <div class="chat-input-row">
+        <textarea class="chat-input" id="chat-input" placeholder="Ask about your fleet, compliance, billing…" onkeydown="chatKey(event)"></textarea>
+        <button class="btn-primary" onclick="sendChat()" style="height:38px;white-space:nowrap;">Send ↵</button>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════════
+         SLIDE 6 — AI Architecture & Platform
+         ════════════════════════════════════════════════════════════════ -->
+    <section class="slide" id="slide-architecture">
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:4px;">
+        <h2 class="slide-title">AI Architecture &amp; Platform</h2>
+        <span class="badge badge-blue">AWS BEDROCK</span>
+        <span class="badge badge-green" style="margin-left:4px;">45 TOOLS</span>
+      </div>
+      <p class="slide-subtitle">Technical view for engineering audiences — stack, data sources, and security posture behind the AI Assistant</p>
+
+      <div class="tab-bar">
+        <button class="tab-btn active" id="arch-tab-stack" onclick="archTab('stack')">Stack &amp; Data</button>
+        <button class="tab-btn" id="arch-tab-security" onclick="archTab('security')">Security &amp; MCP</button>
+      </div>
+
+      <!-- Stack & Data tab -->
+      <div class="tab-content active" id="arch-stack">
+        <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px;">
+          <div class="kpi-card blue"><div class="kpi-label">Backend + Frontend</div><div class="kpi-value blue" style="font-size:16px;">FastAPI + React</div></div>
+          <div class="kpi-card blue"><div class="kpi-label">AI Assistant Tools</div><div class="kpi-value blue">45</div></div>
+          <div class="kpi-card blue"><div class="kpi-label">Model</div><div class="kpi-value blue" style="font-size:16px;">Claude Sonnet 4.6</div></div>
+          <div class="kpi-card blue"><div class="kpi-label">Hosting</div><div class="kpi-value blue" style="font-size:16px;">AWS Bedrock</div></div>
+        </div>
+
+        <div class="card" style="margin-bottom:12px;">
+          <div class="section-label">Technical Stack</div>
+          <table class="data-table">
+            <thead><tr><th>Layer</th><th>Details</th></tr></thead>
+            <tbody>
+              <tr><td style="font-weight:700;color:var(--blue);">Frontend</td><td>React 18 + TypeScript (Vite) · Recharts · 9 CSS token themes · MSAL browser popup</td></tr>
+              <tr><td style="font-weight:700;color:var(--blue);">Backend</td><td>FastAPI (Python 3.11) · Uvicorn · Pydantic v2 · SQLAlchemy (SQLite)</td></tr>
+              <tr><td style="font-weight:700;color:var(--blue);">AI Layer</td><td>Anthropic SDK + Bedrock · Claude Sonnet 4.6 · SSE streaming</td></tr>
+              <tr><td style="font-weight:700;color:var(--yellow);">Auth</td><td>MSAL browser popup (no Device Code — CA-blocked) · Group.Read.All + Directory.Read.All</td></tr>
+              <tr><td style="font-weight:700;color:var(--green);">Data</td><td>Intune Graph API (beta) · AMDB/SI/O2C CSV upload · Apple ABM · Carrier CSV</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="section-label">Data Sources — 8 total, 5 live APIs, 3 CSV uploads</div>
+          <table class="data-table">
+            <thead><tr><th>Source</th><th>Type</th><th>Provides</th></tr></thead>
+            <tbody>
+              <tr><td style="font-weight:700;color:var(--blue);">Microsoft Intune</td><td>Graph beta API</td><td>Devices, group membership, app status, MAM</td></tr>
+              <tr><td style="font-weight:700;color:var(--purple);">SCCM</td><td>AdminService REST</td><td>Rich Client serial numbers (AZL only)</td></tr>
+              <tr><td style="font-weight:700;color:var(--green);">Apple ABM</td><td>API</td><td>NA mobile device coverage</td></tr>
+              <tr><td style="font-weight:700;color:var(--yellow);">AMDB</td><td>CSV upload</td><td>Hardware cost, serial, warranty, model</td></tr>
+              <tr><td style="font-weight:700;color:var(--orange);">ServiceNow SI</td><td>CSV upload</td><td>AMC + EMS service charge records</td></tr>
+              <tr><td style="font-weight:700;color:var(--red);">SAP O2C</td><td>XLSX upload</td><td>Monthly invoice by material / OE</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Security & MCP tab -->
+      <div class="tab-content" id="arch-security">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+          <div class="card" style="border-left:3px solid var(--green);">
+            <div class="section-label" style="color:var(--green);">What's Solid</div>
+            <table class="data-table">
+              <tbody>
+                <tr><td>MSAL browser popup auth</td><td style="color:var(--text-dim);font-size:10px;">No app secret stored — CA policies enforced</td></tr>
+                <tr><td>Rate limiting on all endpoints</td><td style="color:var(--text-dim);font-size:10px;">Every export + outbound Graph call + /auth/ route</td></tr>
+                <tr><td>CORS locked to explicit origins</td><td style="color:var(--text-dim);font-size:10px;">Whitelist only — no wildcard</td></tr>
+                <tr><td>No committed secrets</td><td style="color:var(--text-dim);font-size:10px;">.env in .gitignore; runtime secrets local only</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="card" style="border-left:3px solid var(--orange);">
+            <div class="section-label" style="color:var(--orange);">Gaps Before Multi-Tenant Production</div>
+            <table class="data-table">
+              <tbody>
+                <tr><td><span class="badge badge-red">HIGH</span></td><td>OE billing data isolation — cross-visible today</td></tr>
+                <tr><td><span class="badge badge-yellow">MED</span></td><td>Single-user token model — needs token-per-request flow</td></tr>
+                <tr><td><span class="badge badge-yellow">MED</span></td><td>No production infra — runs on a single machine</td></tr>
+                <tr><td><span class="badge badge-gray">LOW</span></td><td>PII in INFO logs — needs sanitization for prod</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-label">MCP Server Integration — Hub ← REST → MCP Server ← SQL → Intune DB</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;">Intune MCP Server (beta) — authenticated EndUser role; Hub wired as an AI tool alongside the 45 native tools.</div>
+          <table class="data-table">
+            <thead><tr><th>MCP Tool</th><th>Purpose</th></tr></thead>
+            <tbody>
+              <tr><td style="font-family:'Courier New',monospace;">get_amc_devices</td><td>AMC laptop/desktop device list</td></tr>
+              <tr><td style="font-family:'Courier New',monospace;">get_avcc_devices</td><td>AVCC Cloud PC device list</td></tr>
+              <tr><td style="font-family:'Courier New',monospace;">execute_custom_query</td><td>Validated SELECT across IntuneDevices, AMCDevices, AVCCDevices, EntraIDUsers</td></tr>
+              <tr><td style="font-family:'Courier New',monospace;">get_noncompliant_devices</td><td>Noncompliant device list across all device types</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════════
+         SLIDE 7 — Admin Reports: Compare Accounts
+         ════════════════════════════════════════════════════════════════ -->
+    <section class="slide" id="slide-compare">
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:4px;">
+        <h2 class="slide-title">Compare Accounts</h2>
+        <span class="badge badge-orange">DEMO DATA</span>
+        <span class="badge badge-purple" style="margin-left:4px;">ADMIN REPORTS</span>
+      </div>
+      <p class="slide-subtitle">N-way admin/service account comparison — surfaces elevation-tier mismatches and exclusive access before it becomes an audit finding</p>
+
+      <div class="card" style="margin-bottom:14px;">
+        <div class="section-label">Accounts Compared</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+          <div class="card-sm" style="border:1px solid var(--border);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <span style="font-family:'Courier New',monospace;font-size:11px;font-weight:700;color:var(--text-primary);">adm_j.rivera</span>
+              <span class="badge badge-green">ENABLED</span>
+            </div>
+            <div style="font-size:10px;color:var(--text-dim);">IT Operations · AZL</div>
+            <span class="badge badge-blue" style="margin-top:6px;">BROADEST · 14 groups</span>
+          </div>
+          <div class="card-sm" style="border:1px solid var(--border);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <span style="font-family:'Courier New',monospace;font-size:11px;font-weight:700;color:var(--text-primary);">adm_k.chen</span>
+              <span class="badge badge-green">ENABLED</span>
+            </div>
+            <div style="font-size:10px;color:var(--text-dim);">IT Operations · AZL</div>
+            <span class="badge badge-gray" style="margin-top:6px;">9 groups</span>
+          </div>
+          <div class="card-sm" style="border:1px solid var(--border);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <span style="font-family:'Courier New',monospace;font-size:11px;font-weight:700;color:var(--text-primary);">adm_m.patel</span>
+              <span class="badge badge-red">DISABLED</span>
+            </div>
+            <div style="font-size:10px;color:var(--text-dim);">IT Operations · ATA</div>
+            <span class="badge badge-orange" style="margin-top:6px;">NARROWEST · 6 groups</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;border-left:3px solid var(--red);">
+        <div class="section-label" style="color:var(--red);">⚠ Elevation-Tier Mismatch — 2 found</div>
+        <table class="data-table">
+          <thead><tr><th>Group / Role Family</th><th>Tier</th><th>adm_j.rivera</th><th>adm_k.chen</th><th>adm_m.patel</th></tr></thead>
+          <tbody>
+            <tr><td>Global Admin — Break Glass</td><td><span class="badge badge-red">TIER 0</span></td><td>✅</td><td style="background:rgba(245,204,64,0.12);">❌</td><td>❌</td></tr>
+            <tr><td>Server Admins — AZL Prod</td><td><span class="badge badge-orange">TIER 1</span></td><td>✅</td><td>✅</td><td style="background:rgba(245,204,64,0.12);">❌</td></tr>
+          </tbody>
+        </table>
+        <div style="font-size:10px;color:var(--text-dim);margin-top:6px;">&#9432; Same job title, same department — but adm_j.rivera holds Tier 0 break-glass access the other two don't. Flag for review.</div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">Exclusive Access <span style="font-weight:400;color:var(--text-dim);">(held by only one account)</span></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <span class="badge badge-purple">adm_j.rivera → Global Admin – Break Glass</span>
+          <span class="badge badge-purple">adm_k.chen → AVCC-VDI-PowerUsers</span>
+          <span class="badge badge-gray">adm_m.patel → none exclusive</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════════
+         SLIDE 8 — ATA Users Report
+         ════════════════════════════════════════════════════════════════ -->
+    <section class="slide" id="slide-atausers">
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:4px;">
+        <h2 class="slide-title">ATA Users Report</h2>
+        <span class="badge badge-orange">DEMO DATA</span>
+        <span class="badge badge-blue" style="margin-left:4px;">CROSS-OE IDENTITY</span>
+      </div>
+      <p class="slide-subtitle">Every ATA-attributed person across AMC, AVCC, Rich Client, and Mobile — merged under one identity, with SCCM shadow-account detection</p>
+
+      <div class="tab-bar">
+        <button class="tab-btn active" id="atab-person" onclick="ataTab('person')">By Person</button>
+        <button class="tab-btn" id="atab-sccm" onclick="ataTab('sccm')">SCCM Shadow</button>
+      </div>
+
+      <div class="tab-content active" id="ata-person">
+        <div class="card">
+          <div class="section-label">By Person — Merged Identity View</div>
+          <table class="data-table">
+            <thead><tr><th>Person</th><th>Worker Type</th><th>Devices</th><th>OEs</th><th>Device Types</th><th>Flags</th><th>Compliance</th></tr></thead>
+            <tbody>
+              <tr>
+                <td style="font-weight:600;">Rivera, Jesse</td><td><span class="badge badge-blue">FTE</span></td><td>3</td>
+                <td><span class="badge badge-gray">ATA</span> <span class="badge badge-gray">AZL</span></td>
+                <td><span style="color:var(--blue);">●</span> <span style="color:var(--purple);">●</span></td>
+                <td><span class="badge badge-orange">CROSS-OE</span></td><td><span class="badge badge-green">OK</span></td>
+              </tr>
+              <tr>
+                <td style="font-weight:600;">Chen, Karen</td><td><span class="badge badge-blue">FTE</span></td><td>2</td>
+                <td><span class="badge badge-gray">ATA</span></td>
+                <td><span style="color:var(--blue);">●</span> <span style="color:#f97316;">●</span></td>
+                <td><span class="badge badge-purple">2ND ACCT</span></td><td><span class="badge badge-orange">GRACE</span></td>
+              </tr>
+              <tr>
+                <td style="font-weight:600;">Patel, Meera</td><td><span class="badge badge-gray">CONTRACTOR</span></td><td>4</td>
+                <td><span class="badge badge-gray">ATA</span> <span class="badge badge-gray">AGCS</span></td>
+                <td><span style="color:var(--blue);">●</span> <span style="color:#ec4899;">●</span></td>
+                <td><span class="badge badge-yellow">MULTI-DEV</span></td><td><span class="badge badge-red">NONCOMPLIANT</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="tab-content" id="ata-sccm">
+        <div class="card">
+          <div class="section-label">SCCM Shadow — ATA Personnel on AZL-Managed Rich Client</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;">ATA personnel identified on AZL SCCM-managed Rich Client machines but missing from Intune enrollment — a coverage gap, not a billing signal.</div>
+          <div style="display:flex;gap:12px;margin-bottom:10px;font-size:10px;">
+            <span><span style="color:var(--green);">●</span> HIGH confidence — exact SAM match</span>
+            <span><span style="color:var(--yellow);">●</span> MEDIUM confidence — name-fuzzy match</span>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Device Name</th><th>SCCM UPN (raw)</th><th>Resolved UPN</th><th>ATA UPN</th><th>Confidence</th><th>OE</th></tr></thead>
+            <tbody>
+              <tr><td style="font-family:'Courier New',monospace;">RC-AZL-08812</td><td style="font-family:'Courier New',monospace;font-size:10px;">jrivera</td><td>j.rivera@azlifem.pvt</td><td>j.rivera@ata.allianz.com</td><td><span class="badge badge-green">HIGH</span></td><td>AZL</td></tr>
+              <tr><td style="font-family:'Courier New',monospace;">RC-AZL-09104</td><td style="font-family:'Courier New',monospace;font-size:10px;">m.patel3</td><td>m.patel@azlifem.pvt</td><td>m.patel@ata.allianz.com</td><td><span class="badge badge-yellow">MEDIUM</span></td><td>AZL</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════════
+         SLIDE 9 — Policy Intelligence: CIS Audit
+         ════════════════════════════════════════════════════════════════ -->
+    <section class="slide" id="slide-cis">
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:4px;">
+        <h2 class="slide-title">Policy Intelligence — Compliance Audit</h2>
+        <span class="badge badge-orange">DEMO DATA</span>
+        <span class="badge badge-purple" style="margin-left:4px;">POLICY INTELLIGENCE</span>
+      </div>
+      <p class="slide-subtitle">AI narrative review against CIS Benchmark areas, plus a traceable match against Allianz's own internal security control catalog</p>
+
+      <div class="tab-bar">
+        <button class="tab-btn active" id="cis-tab-audit" onclick="cisTab('audit')">CIS Audit</button>
+        <button class="tab-btn" id="cis-tab-coverage" onclick="cisTab('coverage')">Coverage Matrix</button>
+      </div>
+
+      <!-- CIS Audit tab -->
+      <div class="tab-content active" id="cis-audit">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <span class="filter-label">OE</span>
+          <select class="filter-select"><option>AZL</option></select>
+          <span style="margin-left:auto;font-size:10px;color:var(--text-dim);font-family:'Courier New',monospace;">Confidence: HIGH · 214 policies reviewed · sample run</span>
+        </div>
+
+        <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px;">
+          <div class="kpi-card red"><div class="kpi-label">High</div><div class="kpi-value red">3</div></div>
+          <div class="kpi-card orange"><div class="kpi-label">Medium</div><div class="kpi-value orange">7</div></div>
+          <div class="kpi-card yellow"><div class="kpi-label">Low</div><div class="kpi-value yellow">4</div></div>
+        </div>
+
+        <div class="card" style="border-left:3px solid var(--red);margin-bottom:10px;">
+          <div style="display:flex;gap:8px;align-items:baseline;margin-bottom:4px;">
+            <span class="badge badge-red">HIGH</span>
+            <span style="font-size:10px;color:var(--text-dim);font-family:'Courier New',monospace;">CIS 18.9.47</span>
+            <span style="font-weight:700;font-size:12px;">BitLocker not enforced on removable drives</span>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);">Recommendation: enable "Deny write access to removable drives not protected by BitLocker" in the AZL device configuration profile.</div>
+        </div>
+        <div class="card" style="border-left:3px solid var(--orange);margin-bottom:10px;">
+          <div style="display:flex;gap:8px;align-items:baseline;margin-bottom:4px;">
+            <span class="badge badge-orange">MEDIUM</span>
+            <span style="font-size:10px;color:var(--text-dim);font-family:'Courier New',monospace;">CIS 2.3.7</span>
+            <span style="font-weight:700;font-size:12px;">Local admin password rotation interval exceeds benchmark</span>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);">Recommendation: reduce LAPS rotation interval from 90 days to the CIS-recommended 30 days.</div>
+        </div>
+        <div class="card" style="border-left:3px solid var(--yellow);">
+          <div style="display:flex;gap:8px;align-items:baseline;margin-bottom:4px;">
+            <span class="badge badge-yellow">LOW</span>
+            <span style="font-size:10px;color:var(--text-dim);font-family:'Courier New',monospace;">CIS 9.1.2</span>
+            <span style="font-weight:700;font-size:12px;">Windows Firewall notification setting not explicit</span>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);">Recommendation: explicitly set notification behavior rather than relying on the OS default.</div>
+        </div>
+      </div>
+
+      <!-- Coverage Matrix tab -->
+      <div class="tab-content" id="cis-coverage">
+        <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">Every synced policy is keyword-matched against <strong>348 real controls</strong> extracted from 9 internal Allianz IS Practice / AFRIS policy documents — not a generic benchmark opinion. Numbers below reflect the live catalog as of the last sync.</p>
+
+        <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px;">
+          <div class="kpi-card blue"><div class="kpi-label">Policies Synced</div><div class="kpi-value blue">2,090</div></div>
+          <div class="kpi-card green"><div class="kpi-label">Policies w/ ≥1 Match</div><div class="kpi-value green">211</div></div>
+          <div class="kpi-card green"><div class="kpi-label">Total Control Matches</div><div class="kpi-value green">547</div></div>
+          <div class="kpi-card orange"><div class="kpi-label">Controls Matched</div><div class="kpi-value orange">84 / 348</div></div>
+        </div>
+
+        <div class="card" style="margin-bottom:12px;">
+          <div class="section-label">Standards Coverage by OE — % of tenant-matched controls passed, by category</div>
+          <table class="data-table">
+            <thead><tr><th>Category</th><th>AZL</th><th>ATA</th><th>AGCS</th><th>AZRA</th></tr></thead>
+            <tbody>
+              <tr><td style="font-weight:700;color:var(--blue);">Authentication</td><td style="color:var(--green);">91%</td><td style="color:var(--green);">88%</td><td style="color:var(--yellow);">76%</td><td style="color:var(--green);">85%</td></tr>
+              <tr><td style="font-weight:700;color:var(--blue);">Endpoint Hardening</td><td style="color:var(--green);">83%</td><td style="color:var(--yellow);">71%</td><td style="color:var(--yellow);">68%</td><td style="color:var(--orange);">54%</td></tr>
+              <tr><td style="font-weight:700;color:var(--blue);">Logging &amp; Monitoring</td><td style="color:var(--yellow);">62%</td><td style="color:var(--yellow);">65%</td><td style="color:var(--orange);">48%</td><td style="color:var(--orange);">41%</td></tr>
+              <tr><td style="font-weight:700;color:var(--blue);">Data Loss Prevention</td><td style="color:var(--green);">79%</td><td style="color:var(--yellow);">70%</td><td style="color:var(--yellow);">67%</td><td style="color:var(--orange);">52%</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="section-label">Control Catalog Source Documents — 348 controls total</div>
+          <table class="data-table">
+            <thead><tr><th>Source</th><th>Version</th><th>Controls</th></tr></thead>
+            <tbody>
+              <tr><td>IS Practice #15 — AD Security</td><td style="color:var(--text-dim);">v1.1</td><td style="font-weight:700;color:var(--purple);">85</td></tr>
+              <tr><td>IS Practice #1 — Authentication &amp; Authorization</td><td style="color:var(--text-dim);">v2.0</td><td style="font-weight:700;color:var(--purple);">39</td></tr>
+              <tr><td>IS Practice #2 — Cryptography</td><td style="color:var(--text-dim);">v2.1</td><td style="font-weight:700;color:var(--purple);">36</td></tr>
+              <tr><td>IS Practice #16 — DLP</td><td style="color:var(--text-dim);">v1.3</td><td style="font-weight:700;color:var(--purple);">34</td></tr>
+              <tr><td>AFRIS</td><td style="color:var(--text-dim);">v4.0</td><td style="font-weight:700;color:var(--purple);">49</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main><!-- /slide-viewport -->
+
+  <!-- Notes panel -->
+  <aside id="notes-panel">
+    <div id="notes-header">
+      <span>&#9741; Speaker Notes</span>
+      <button id="notes-toggle" onclick="toggleNotes()">✕</button>
+    </div>
+    <div id="notes-body">
+      <!-- Populated by goTo() -->
+    </div>
+  </aside>
+
+</div><!-- /main-area -->
+</div><!-- /shell -->
+
+<!-- 3D globe (OE Mission Control) — requires internet access for CDN -->
+<script src="https://cdn.jsdelivr.net/npm/globe.gl@2.46.1/dist/globe.gl.min.js"></script>
+
+<script>
+// ── Data ────────────────────────────────────────────────────────────────────
+const OE_DATA = [
+  { oe:"AZL",       win:2262, mac:30, avcc:1173, total:3465 },
+  { oe:"ATA",       win:461,  mac:24, avcc:663,  total:1148 },
+  { oe:"AP-US",     win:1331, mac:24, avcc:0,    total:1355 },
+  { oe:"AP-CANADA", win:533,  mac:0,  avcc:28,   total:561  },
+  { oe:"AZRA",      win:175,  mac:1,  avcc:56,   total:232  },
+  { oe:"AGCS",      win:1547, mac:0,  avcc:1549, total:3096 },
+  { oe:"AP-MEXICO", win:99,   mac:0,  avcc:24,   total:123  },
+  { oe:"AZT",       win:1089, mac:0,  avcc:12,   total:1101 },
+  { oe:"PPRE",      win:579,  mac:0,  avcc:335,  total:914  },
+];
+const MAX_TOTAL = Math.max(...OE_DATA.map(r => r.total));
+
+// Per-OE compliance breakdown (sums to fleet-wide 427 noncompliant, matches KPI card)
+const OE_COMPLIANCE = {
+  AZL:        { compliant: 3309, grace: 104, noncompliant: 52  },
+  ATA:        { compliant: 1097, grace: 34,  noncompliant: 17  },
+  "AP-US":    { compliant: 1294, grace: 41,  noncompliant: 20  },
+  "AP-CANADA":{ compliant: 536,  grace: 17,  noncompliant: 8   },
+  AZRA:       { compliant: 222,  grace: 7,   noncompliant: 3   },
+  AGCS:       { compliant: 2797, grace: 93,  noncompliant: 206 },
+  "AP-MEXICO":{ compliant: 100,  grace: 4,   noncompliant: 19  },
+  AZT:        { compliant: 980,  grace: 33,  noncompliant: 88  },
+  PPRE:       { compliant: 873,  grace: 27,  noncompliant: 14  },
+};
+
+// OE hub coordinates (mirrors OeMissionControl.tsx OE_LOCATIONS)
+const OE_LOCATIONS = [
+  { oe:"AZL",       lat:44.9881,  lng:-93.3604,  city:"Golden Valley, MN" },
+  { oe:"ATA",       lat:44.9681,  lng:-93.3404,  city:"Golden Valley, MN" },
+  { oe:"AP-US",     lat:37.5407,  lng:-77.4360,  city:"Richmond, VA" },
+  { oe:"AP-CANADA", lat:43.3601,  lng:-80.3124,  city:"Cambridge, Ontario, Canada" },
+  { oe:"AZRA",      lat:38.2324,  lng:-122.6367, city:"Petaluma, CA" },
+  { oe:"AGCS",      lat:41.8781,  lng:-87.6298,  city:"Chicago, IL" },
+  { oe:"AGCS",      lat:40.7128,  lng:-74.0060,  city:"New York, NY" },
+  { oe:"AP-MEXICO", lat:19.4326,  lng:-99.1332,  city:"Mexico City, MX" },
+  { oe:"AZT",       lat:40.7589,  lng:-73.9851,  city:"New York, NY" },
+  { oe:"PPRE",      lat:40.6892,  lng:-74.0445,  city:"New York, NY" },
+];
+
+const ARC_ROUTES = [
+  ["AZL","AP-US"], ["AZL","AGCS"], ["ATA","AP-CANADA"], ["AGCS","AZT"],
+  ["AGCS","AP-MEXICO"], ["AZT","PPRE"], ["AZRA","AP-US"],
+];
+
+function getOeHealth(oe) {
+  const c = OE_COMPLIANCE[oe];
+  if (!c) return "warning";
+  const total = c.compliant + c.grace + c.noncompliant;
+  if (!total) return "warning";
+  const rate = c.noncompliant / total;
+  if (rate >= 0.15) return "critical";
+  if (rate >= 0.05) return "warning";
+  return "healthy";
+}
+const HEALTH_COLOR = { healthy:"#22c55e", warning:"#f59e0b", critical:"#ef4444" };
+
+const FINDINGS = [
+  { id:"A-02", signal:"Warranty Mismatch",        cat:"Hardware",  count:119,   exp_usd:  149,  status:"confirmed", sev:"low",    color:"#f5cc40" },
+  { id:"A-03", signal:"Charge 2 Scope Gap",        cat:"Service",   count:228,   exp_usd:  548,  status:"confirmed", sev:"medium", color:"#ff8c20" },
+  { id:"A-04", signal:"O2C vs Intune Delta",        cat:"O2C",       count:20,    exp_usd:  393,  status:"confirmed", sev:"medium", color:"#a78bfa" },
+  { id:"A-06", signal:"Stale SI Charge",            cat:"Service",   count:22,    exp_usd: 1105,  status:"confirmed", sev:"high",   color:"#ff5050" },
+  { id:"B-03", signal:"AVCC Admin Overbilling",     cat:"Hardware",  count:59,    exp_usd: 1440,  status:"confirmed", sev:"high",   color:"#ff5050" },
+  { id:"C-05", signal:"EMS SI — No Device",         cat:"Mobile",    count:79,    exp_usd:  551,  status:"confirmed", sev:"medium", color:"#ff8c20" },
+  { id:"D-06", signal:"AMC SI — No Intune Device",  cat:"Service",   count:631,   exp_usd:null,   status:"investigating", sev:"high", color:"#a78bfa" },
+];
+
+const SIGNALS = {
+  stale_dups: {
+    title: "Stale Duplicates",
+    color: "#fb923c",
+    count: 5,
+    exposure: "$96/mo",
+    desc: "Devices with the same serial enrolled multiple times — one or more are stale but still carry an active SI service charge ($19.20/device/mo × 5 records).",
+    rows: [
+      { device:"AMC-D-AZL-00881", upn:"s.mitchell@allianzlife.com", oe:"AZL", serial:"PF3AB12X", last_sync:"2026-03-12", compliance:"Noncompliant", stale:"Stale >90d" },
+      { device:"AMC-D-AZL-00882", upn:"s.mitchell@allianzlife.com", oe:"AZL", serial:"PF3AB12X", last_sync:"2026-06-28", compliance:"Compliant",    stale:"Active" },
+      { device:"AMC-D-ATA-01234", upn:"d.chen@allianz.com",         oe:"ATA", serial:"5CD128A7K",last_sync:"2026-02-01", compliance:"Noncompliant", stale:"Stale >90d" },
+      { device:"AMC-D-ATA-01235", upn:"d.chen@allianz.com",         oe:"ATA", serial:"5CD128A7K",last_sync:"2026-06-29", compliance:"Compliant",    stale:"Active" },
+      { device:"AMC-D-AGCS-00443",upn:"r.klein@agcs.allianz.com",   oe:"AGCS",serial:"MXL014K9J",last_sync:"2025-12-10", compliance:"Noncompliant", stale:"Stale >90d" },
+    ]
+  },
+  no_device: {
+    title: "No Device for Group",
+    color: "#f87171",
+    count: 37,
+    exposure: null,
+    desc: "OE group members in Intune who have no enrolled managed device. These users cannot receive app deployments or compliance policies.",
+    rows: [
+      { upn:"m.gonzalez@allianzlife.com",   oe:"AZL",  group:"AMC-Win-AZL",   last_seen:"never" },
+      { upn:"k.olsen@allianzlife.com",      oe:"AZL",  group:"AMC-Win-AZL",   last_seen:"never" },
+      { upn:"p.nair@allianz.com",           oe:"ATA",  group:"AMC-Win-ATA",   last_seen:"2026-01-14" },
+      { upn:"l.weber@agcs.allianz.com",     oe:"AGCS", group:"AMC-Win-AGCS",  last_seen:"never" },
+      { upn:"f.dubois@azra.allianz.com",    oe:"AZRA", group:"AMC-Win-AZRA",  last_seen:"2025-11-30" },
+    ]
+  },
+  orphaned: {
+    title: "Orphaned Devices",
+    color: "#fbbf24",
+    count: 20,
+    exposure: null,
+    desc: "Enrolled devices with no matching OE group membership. Device is in Intune but the user is not in any NA OE group — may indicate offboarding without device cleanup.",
+    rows: [
+      { device:"AMC-D-AZL-09012", upn:"former.user1@allianzlife.com", oe:"Unknown", last_sync:"2026-05-14", compliance:"Noncompliant" },
+      { device:"AMC-D-ATA-07823", upn:"leaver.acct1@allianz.com",     oe:"Unknown", last_sync:"2026-04-22", compliance:"Noncompliant" },
+      { device:"VPDW-AGCS-00118", upn:"term.acct1@agcs.allianz.com",  oe:"Unknown", last_sync:"2026-03-09", compliance:"Noncompliant" },
+    ]
+  },
+  mdm_orphans: {
+    title: "Mobile: Group — No Device",
+    color: "#f97316",
+    count: 9,
+    exposure: null,
+    desc: "Users in COPE/COBO/BYOD enrollment groups who have no active iOS or Android device in Intune. These users are tagged for MDM charges but have no device to manage.",
+    rows: [
+      { upn:"a.reyes@allianzlife.com",  oe:"AZL",  group:"COPE-AZL",  enrolled_type:"COPE" },
+      { upn:"b.harper@allianz.com",     oe:"ATA",  group:"BYOD-ATA",  enrolled_type:"BYOD" },
+      { upn:"c.osei@agcs.allianz.com",  oe:"AGCS", group:"COBO-AGCS", enrolled_type:"COBO" },
+    ]
+  },
+  si_no_intune: {
+    title: "AMC SI — No Intune Device",
+    color: "#a78bfa",
+    count: 724,
+    exposure: "up to $13,901/mo",
+    desc: "Active AMC SI service charge (€19.18/mo per record) with no matching live Intune device. Devices are classified as Missing, Non-NA, Stale, or User-Mismatch.",
+    rows: [
+      { serial:"SB2AF12X", upn:"n.torres1@allianzlife.com",  oe:"AZL",  status:"Missing",       si_since:"2025-08-01" },
+      { serial:"PF8CD34Y", upn:"h.walsh@allianz.com",        oe:"ATA",  status:"Stale",         si_since:"2025-11-14" },
+      { serial:"MXK891AB", upn:"i.silveira@agcs.allianz.com",oe:"AGCS", status:"User-Mismatch", si_since:"2026-01-07" },
+      { serial:"5CD992ZZ", upn:"j.parkes@azra.allianz.com",  oe:"AZRA", status:"Non-NA",        si_since:"2026-03-18" },
+      { serial:"PF4GH01K", upn:"k.bowen@ap-us.allianz.com",  oe:"AP-US",status:"Missing",       si_since:"2025-07-29" },
+    ]
+  },
+  warranty_mismatch: {
+    title: "Warranty Mismatch",
+    color: "#f5cc40",
+    count: 110,
+    exposure: "$102/mo net",
+    desc: "AMDB warranty dates differ from PSREF/Apple Coverage API. Undercharged by $649/mo (devices past warranty still billed at warranty rate) and overcharged by $751/mo.",
+    rows: [
+      { device:"AMC-D-AZL-01123", serial:"PF1XA92",  oe:"AZL",  amdb_warranty:"2027-06-01", psref_warranty:"2025-06-01", type:"Undercharge", delta:"+$6/mo" },
+      { device:"AMC-D-ATA-04451", serial:"5CD003BZ",  oe:"ATA",  amdb_warranty:"2024-12-01", psref_warranty:"2026-12-01", type:"Overcharge",  delta:"-$6/mo" },
+      { device:"VPDW-AGCS-00089", serial:"MXL771XY",  oe:"AGCS", amdb_warranty:"2026-06-01", psref_warranty:"2025-03-01", type:"Undercharge", delta:"+$6/mo" },
+    ]
+  },
+  stale_billed: {
+    title: "Stale SI Charge",
+    color: "#ff5050",
+    count: 26,
+    exposure: "$499/mo",
+    desc: "Retired or stale devices (>90 days offline) still carrying an active AMC SI service charge of €19.18/device/mo ($19.20 at 1.17). Total monthly exposure: 26 × $19.20 = $499 (currently unrecovered).",
+    rows: [
+      { device:"AMC-D-AZL-00881", upn:"r.former1@allianzlife.com",  oe:"AZL",  last_sync:"2026-01-14", si_charge:"$19.20/mo", days_stale:166 },
+      { device:"AMC-D-ATA-01991", upn:"l.former1@allianz.com",      oe:"ATA",  last_sync:"2025-11-22", si_charge:"$19.20/mo", days_stale:219 },
+      { device:"VPDW-AGCS-00201", upn:"o.former1@agcs.allianz.com", oe:"AGCS", last_sync:"2025-12-01", si_charge:"$19.20/mo", days_stale:210 },
+      { device:"AMC-D-AZRA-00341",upn:"e.former1@azra.allianz.com", oe:"AZRA", last_sync:"2026-02-12", si_charge:"$19.20/mo", days_stale:137 },
+      { device:"AMC-M-AZL-00049", upn:"g.former1@allianzlife.com",  oe:"AZL",  last_sync:"2026-03-01", si_charge:"$19.20/mo", days_stale:120 },
+    ]
+  },
+  dup_serial_si: {
+    title: "Dup Serial — Active SI Leak",
+    color: "#fb923c",
+    count: 6,
+    exposure: "$115/mo",
+    desc: "Retired duplicate device still carries an active SI service charge. Every record here is $19.20/month being billed for a device no longer managed. The active twin device has already taken over.",
+    rows: [
+      { device:"AMC-D-AZL-00881", upn:"s.mitchell@allianzlife.com", oe:"AZL",  serial:"PF3AB12X", last_sync:"2026-03-12", si_status:"Active", days_stale:109 },
+      { device:"AMC-D-ATA-01234", upn:"d.chen@allianz.com",         oe:"ATA",  serial:"5CD128A7K",last_sync:"2026-02-01", si_status:"Active", days_stale:148 },
+    ]
+  },
+  stock_active_si: {
+    title: "In Stock / In Transit — Active SI",
+    color: "#f97316",
+    count: 11,
+    exposure: "$211/mo",
+    desc: "AMDB asset_status = 'In Stock' or 'In Transit' but ServiceNow SI record is active and billing. These devices are in a warehouse but are incurring service charges.",
+    rows: [
+      { serial:"WX4AA00Z", oe:"AZL",  amdb_status:"In Stock",   si_status:"Active", charge:"$19.20/mo" },
+      { serial:"KF2BB11Y", oe:"ATA",  amdb_status:"In Transit", si_status:"Active", charge:"$19.20/mo" },
+      { serial:"PF9CC88X", oe:"AGCS", amdb_status:"In Stock",   si_status:"Active", charge:"$19.20/mo" },
+    ]
+  },
+  ems_si_no_device: {
+    title: "EMS SI — No Intune Device",
+    color: "#c084fc",
+    count: 93,
+    exposure: "TBD (rates pending)",
+    desc: "EMS mobile SI record active but no matching iOS/Android device found in Intune (85 missing, 8 stale). Rates depend on COPE/COBO/BYOD tier — pending confirmation from Chris/Vivian.",
+    rows: [
+      { upn:"a.parra@allianzlife.com",  oe:"AZL",  si_type:"COPE",  si_since:"2025-09-01", intune_status:"Missing" },
+      { upn:"b.suh@allianz.com",        oe:"ATA",  si_type:"BYOD",  si_since:"2026-01-14", intune_status:"Stale"   },
+      { upn:"c.nwosu@agcs.allianz.com", oe:"AGCS", si_type:"COBO",  si_since:"2025-11-01", intune_status:"Missing" },
+    ]
+  },
+};
+
+// ── User Journey — static demo snapshot styled after the live By Department / By Manager views ──
+const DEPT_USERS = [
+  { department:"ATA-SDD-Service Desk & Deskside Support_USA", oe:"ATA", device_count:11, user_count:9,  active:10, stale:1, compliant:9,  noncompliant:1, in_grace:1, top_manager:"Whitfield, Grace",  manager_count:1 },
+  { department:"ATA-AZL Policy Admin Services_USA",           oe:"AZL", device_count:8,  user_count:7,  active:7,  stale:1, compliant:6,  noncompliant:1, in_grace:1, top_manager:"Okafor, Daniel",     manager_count:1 },
+  { department:"ATA-AZL App Support and Maintenance_USA",     oe:"AZL", device_count:9,  user_count:8,  active:8,  stale:0, compliant:8,  noncompliant:0, in_grace:1, top_manager:"Whitfield, Grace",  manager_count:1 },
+  { department:"ATA-AZL IT Quality Assurance_USA",             oe:"AZL", device_count:7,  user_count:6,  active:6,  stale:1, compliant:5,  noncompliant:1, in_grace:1, top_manager:"Okafor, Daniel",     manager_count:1 },
+  { department:"ATA-CEO-Overall Collection CC_USA",            oe:"ATA", device_count:8,  user_count:7,  active:8,  stale:0, compliant:8,  noncompliant:0, in_grace:0, top_manager:"Pham, Linda",        manager_count:1 },
+  { department:"ATA-AZL Digital and Enterprise Svcs_USA",      oe:"AZL", device_count:8,  user_count:7,  active:7,  stale:1, compliant:6,  noncompliant:1, in_grace:1, top_manager:"Whitfield, Grace",  manager_count:1 },
+  { department:"ATA-NSP-Security Services_USA",                oe:"ATA", device_count:7,  user_count:6,  active:6,  stale:1, compliant:5,  noncompliant:1, in_grace:1, top_manager:"Pham, Linda",        manager_count:1 },
+  { department:"ATA-AZL Data Actuarial Solutions_USA",         oe:"AZL", device_count:6,  user_count:5,  active:5,  stale:1, compliant:5,  noncompliant:1, in_grace:0, top_manager:"Okafor, Daniel",     manager_count:1 },
+  { department:"ATA-CEO-Human Resources_USA",                  oe:"ATA", device_count:5,  user_count:4,  active:5,  stale:0, compliant:5,  noncompliant:0, in_grace:0, top_manager:"Pham, Linda",        manager_count:1 },
+];
+
+const MGR_ROWS = [
+  { manager_name:"Whitfield, Grace", manager_upn:"grace.whitfield@na.allianz-technology.com", device_count:28, active:25, noncompliant:2, departments:["ATA-SDD-Service Desk & Deskside Support_USA","ATA-AZL App Support and Maintenance_USA","ATA-AZL Digital and Enterprise Svcs_USA"] },
+  { manager_name:"Okafor, Daniel",   manager_upn:"daniel.okafor@na.allianz-technology.com",    device_count:21, active:18, noncompliant:3, departments:["ATA-AZL Policy Admin Services_USA","ATA-AZL IT Quality Assurance_USA","ATA-AZL Data Actuarial Solutions_USA"] },
+  { manager_name:"Pham, Linda",      manager_upn:"linda.pham@na.allianz-technology.com",       device_count:20, active:19, noncompliant:1, departments:["ATA-CEO-Overall Collection CC_USA","ATA-NSP-Security Services_USA","ATA-CEO-Human Resources_USA"] },
+];
+
+// Multi-level manager org chart — static sample mirroring backend build_manager_tree() shape.
+// own_* = devices held by this manager's direct reports only; team_* = own + all descendants recursively.
+const MGR_TREE = [
+  {
+    manager_name: "Dunne, Brendan", manager_upn: "brendan.dunne@na.allianz-technology.com",
+    job_title: "Chief Information Officer", department: "ATA-CEO",
+    own_device_count: 3, own_active: 3, own_noncompliant: 0,
+    team_device_count: 69, team_active: 62, team_noncompliant: 6,
+    children: [
+      {
+        manager_name: "Whitfield, Grace", manager_upn: "grace.whitfield@na.allianz-technology.com",
+        job_title: "Director, Service Desk & Deskside Support", department: "ATA-SDD",
+        own_device_count: 28, own_active: 25, own_noncompliant: 2,
+        team_device_count: 28, team_active: 25, team_noncompliant: 2,
+        children: []
+      },
+      {
+        manager_name: "Okafor, Daniel", manager_upn: "daniel.okafor@na.allianz-technology.com",
+        job_title: "Director, App Support & QA", department: "ATA-AZL",
+        own_device_count: 21, own_active: 18, own_noncompliant: 3,
+        team_device_count: 21, team_active: 18, team_noncompliant: 3,
+        children: []
+      },
+      {
+        manager_name: "Pham, Linda", manager_upn: "linda.pham@na.allianz-technology.com",
+        job_title: "Director, Security & Collections", department: "ATA-NSP",
+        own_device_count: 17, own_active: 16, own_noncompliant: 1,
+        team_device_count: 17, team_active: 16, team_noncompliant: 1,
+        children: []
+      },
+    ],
+  },
+];
+
+function renderDeptUsers() {
+  const tb = document.getElementById('dept-users-tbody');
+  if (!tb) return;
+  tb.innerHTML = DEPT_USERS.map(d => `<tr>
+    <td style="font-size:11px;color:var(--text-secondary);">${d.department}</td>
+    <td><span class="badge badge-gray">${d.oe}</span></td>
+    <td style="font-weight:700;">${d.device_count}</td>
+    <td>${d.user_count}</td>
+    <td>${d.compliant}</td>
+    <td>${d.noncompliant > 0 ? `<span class="badge badge-red">${d.noncompliant}</span>` : d.noncompliant}</td>
+    <td>${d.stale > 0 ? `<span class="badge badge-orange">${d.stale}</span>` : d.stale}</td>
+    <td style="font-size:11px;color:var(--text-dim);">${d.top_manager}</td>
+  </tr>`).join('');
+}
+
+function renderTowerDepts() {
+  const tb = document.getElementById('tower-depts-tbody');
+  if (!tb) return;
+  tb.innerHTML = MGR_ROWS.map(m => `<tr>
+    <td style="font-size:11px;color:var(--text-secondary);">${m.manager_name}</td>
+    <td style="font-size:11px;color:var(--text-dim);">${m.manager_upn}</td>
+    <td style="font-weight:700;">${m.device_count}</td>
+    <td>${m.active}</td>
+    <td>${m.noncompliant > 0 ? `<span class="badge badge-red">${m.noncompliant}</span>` : m.noncompliant}</td>
+    <td style="font-size:11px;color:var(--text-dim);">${m.departments.length} depts</td>
+  </tr>`).join('');
+}
+
+// Set of manager_upn currently expanded in the org chart tree
+const mgrTreeExpanded = new Set(MGR_TREE.map(n => n.manager_upn));
+
+function renderMgrTreeNode(node, depth) {
+  const hasChildren = node.children && node.children.length > 0;
+  const isOpen = mgrTreeExpanded.has(node.manager_upn);
+  const rate = node.team_device_count > 0 ? node.team_noncompliant / node.team_device_count : 0;
+  const dotColor = rate > 0.1 ? 'var(--red)' : rate > 0 ? 'var(--orange)' : 'var(--green)';
+
+  const childrenHtml = hasChildren && isOpen
+    ? `<div>${node.children.map(c => renderMgrTreeNode(c, depth + 1)).join('')}</div>`
+    : '';
+
+  return `
+    <div style="position:relative;padding-left:${depth > 0 ? 24 : 0}px;">
+      ${depth > 0 ? `<div style="position:absolute;left:8px;top:0;bottom:20px;width:1px;background:var(--border);"></div>` : ''}
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 0;position:relative;">
+        ${depth > 0 ? `<div style="position:absolute;left:8px;top:50%;width:16px;height:1px;background:var(--border);"></div>` : ''}
+        <button
+          onclick="${hasChildren ? `toggleMgrNode('${node.manager_upn}')` : ''}"
+          style="width:16px;height:16px;min-width:16px;border-radius:3px;border:1px solid var(--border);
+                 background:${hasChildren ? 'var(--bg-panel)' : 'transparent'};color:var(--text-muted);
+                 font-size:9px;cursor:${hasChildren ? 'pointer' : 'default'};display:flex;align-items:center;
+                 justify-content:center;z-index:1;"
+        >${hasChildren ? (isOpen ? '▼' : '▶') : ''}</button>
+
+        <span style="width:8px;height:8px;min-width:8px;border-radius:50%;background:${dotColor};"></span>
+
+        <div class="card" style="padding:6px 12px;display:flex;align-items:center;gap:12px;flex:0 1 auto;background:var(--bg-panel);">
+          <div>
+            <button onclick="showMgrJourney('${node.manager_upn}')" style="background:none;border:none;cursor:pointer;padding:0;text-align:left;">
+              <div style="font-size:12px;font-weight:700;color:var(--text-primary);text-decoration:underline dotted;">${node.manager_name}</div>
+            </button>
+            <div style="font-size:10px;color:var(--text-secondary);">${node.job_title || '—'}${node.department ? ` · ${node.department}` : ''}</div>
+          </div>
+          <div style="display:flex;gap:10px;font-size:10px;font-family:'IBM Plex Mono',monospace;">
+            <span title="Devices owned directly by this manager's own reports" style="color:var(--text-muted);">OWN <b style="color:var(--text-primary);">${node.own_device_count}</b></span>
+            <span title="Total devices across this manager's entire org, including sub-teams" style="color:var(--text-muted);">TEAM <b style="color:var(--text-primary);">${node.team_device_count}</b></span>
+            ${node.team_noncompliant > 0 ? `<span style="color:var(--red);">NONCOMPLIANT <b>${node.team_noncompliant}</b></span>` : ''}
+            ${hasChildren ? `<span style="color:var(--text-dim);">${node.children.length} direct report${node.children.length === 1 ? '' : 's'}</span>` : ''}
+          </div>
+        </div>
+      </div>
+      ${childrenHtml}
+    </div>`;
+}
+
+function renderMgrTree() {
+  const el = document.getElementById('mgr-tree-container');
+  if (!el) return;
+  el.innerHTML = MGR_TREE.map(n => renderMgrTreeNode(n, 0)).join('');
+}
+
+function toggleMgrNode(upn) {
+  if (mgrTreeExpanded.has(upn)) mgrTreeExpanded.delete(upn);
+  else mgrTreeExpanded.add(upn);
+  renderMgrTree();
+}
+
+function showMgrJourney(upn) {
+  const bc = document.getElementById('journey-breadcrumb');
+  if (bc) bc.textContent = 'By Manager · ' + upn;
+}
+
+let mgrViewMode = 'tree';
+function toggleMgrView() {
+  mgrViewMode = mgrViewMode === 'tree' ? 'table' : 'tree';
+  const treeEl = document.getElementById('mgr-tree-view');
+  const tableEl = document.getElementById('mgr-table-view');
+  const btn = document.getElementById('mgr-view-toggle');
+  if (mgrViewMode === 'table') {
+    treeEl.style.display = 'none';
+    tableEl.style.display = '';
+    btn.textContent = '⊟ ORG CHART VIEW';
+    renderTowerDepts();
+  } else {
+    treeEl.style.display = '';
+    tableEl.style.display = 'none';
+    btn.textContent = '☰ FLAT TABLE VIEW';
+    renderMgrTree();
+  }
+}
+
+function ataTab(tab) {
+  ['person','sccm'].forEach(t => {
+    document.getElementById('atab-' + t).classList.toggle('active', t === tab);
+    document.getElementById('ata-' + t).classList.toggle('active', t === tab);
+  });
+}
+
+function archTab(tab) {
+  ['stack','security'].forEach(t => {
+    document.getElementById('arch-tab-' + t).classList.toggle('active', t === tab);
+    document.getElementById('arch-' + t).classList.toggle('active', t === tab);
+  });
+}
+
+function cisTab(tab) {
+  ['audit','coverage'].forEach(t => {
+    document.getElementById('cis-tab-' + t).classList.toggle('active', t === tab);
+    document.getElementById('cis-' + t).classList.toggle('active', t === tab);
+  });
+}
+
+function journeyTab(tab) {
+  ['dept','tower'].forEach(t => {
+    document.getElementById('jtab-' + t).classList.toggle('active', t === tab);
+    document.getElementById('journey-' + t).classList.toggle('active', t === tab);
+  });
+  const crumbs = {
+    dept:  'By Department',
+    tower: 'By Manager',
+  };
+  const bc = document.getElementById('journey-breadcrumb');
+  if (bc) bc.textContent = crumbs[tab];
+  if (tab === 'dept') renderDeptUsers();
+  if (tab === 'tower') renderMgrTree();
+}
+
+const NOTES = [
+  {
+    title: "Fleet Dashboard",
+    points: [
+      "Sample fleet of 11,995 devices across 9 NA operating entities — illustrative, not a live Intune pull",
+      "Compliance baseline shown at 81% — target is 90%+; AVCC and EMS are the drag at 73% and 61% in this sample",
+      "Anomaly Watchlist demonstrates how the 3 most operationally risky signal types would surface",
+      "OE breakdown shows device distribution — AZL + ATA account for ~42% of the sample fleet",
+    ],
+    callout: "<strong>Demo hook:</strong> Click the anomaly rows to expand drill-down detail. Ask: 'Why does AGCS have 25 devices with no primary user?' — the mechanic is real, the numbers are staged."
+  },
+  {
+    title: "Billing Reconciliation",
+    points: [
+      "All dollar figures on this slide are illustrative placeholders — they do NOT reflect actual billing exposure",
+      "The demo shows a mocked $4,186/mo across 6 findings purely to illustrate how the reconciliation view aggregates and surfaces exposure",
+      "A-06 Stale SI Charge and B-03 AVCC Admin Overbilling are sample findings meant to show the detection pattern, not real disputes",
+      "The real feature reconciles live billing records once connected — no financial conclusions should be drawn from this demo",
+    ],
+    callout: "<strong>Framing for stakeholders:</strong> Talk about the mechanism (how exposure would be surfaced and traced to source records), not the sample dollar figures — those are demo-only and don't reflect reality."
+  },
+  {
+    title: "Anomaly Watchlist",
+    points: [
+      "Two sections: IT Hygiene (device management health) and Billing Disputes (service charge integrity)",
+      "Each signal shows count, a sample monthly $ figure, and a full device list with export — the $ values here are demo placeholders",
+      "AMC SI — No Intune Device is the largest sample signal: 724 mock records, illustrating what a high-volume signal looks like",
+      "Stale Duplicates example: same serial enrolled twice — the per-device $ shown is a mocked figure for illustration only",
+      "All signals support OE filter and CSV/XLSX export for dispute routing once wired to real data",
+    ],
+    callout: "<strong>Demo hook:</strong> Switch to Billing section in the sidebar and click 'Stale SI Charge' — show the mechanic (last-sync dates, per-device drilldown); note out loud that the exposure numbers are placeholders."
+  },
+  {
+    title: "Department Journey",
+    points: [
+      "Rolls up device footprint by Department and by Manager, scoped to the 9 NA operating entities (sample data)",
+      "By Department: 9 sample departments, 69 devices, 6 noncompliant, 5 stale — expandable rows reveal per-device detail",
+      "By Manager: 3 sample managers roll up their departments' device counts, active/noncompliant totals",
+      "Clicking a UPN in the expanded device table opens the full Device Journey overlay for that (sample) user",
+      "Same drilldown pattern managers would use to review their org's compliance and staleness once connected to live data",
+    ],
+    callout: "<strong>Demo hook:</strong> Switch to By Manager to show how compliance rolls up across a manager's departments without needing an org chart."
+  },
+  {
+    title: "AI Assistant",
+    points: [
+      "45 built-in tools covering fleet, compliance, admins, billing, mobile, policy intelligence, activation readiness",
+      "Powered by Claude (AWS Bedrock) via the ClaudeCode VSCode extension credentials",
+      "Understands billing signals — ask 'what's the action plan for AGCS mobile' for signal-level guidance (answers reference this demo's sample data)",
+      "Try: 'Is the data ready to share?' — runs a preflight check across the sample data sources in this demo",
+      "In this demo the assistant queries the same mocked dataset shown elsewhere — not a live production cache",
+    ],
+    callout: "<strong>Demo hook:</strong> Type 'Give me a health scorecard for AZL' — watch it call 5 tools and synthesize a narrative response from the sample data."
+  },
+  {
+    title: "AI Architecture",
+    points: [
+      "Technical slide for engineers — stack, data sources, and security posture behind the AI Assistant",
+      "Stack & Data tab: React/FastAPI/Bedrock layers plus the 8 data sources (5 live APIs, 3 CSV uploads) that feed the in-memory cache",
+      "Security & MCP tab: honest solid-vs-gaps assessment — OE billing data isolation is the HIGH-severity blocker before multi-tenant production",
+      "MCP Server integration shown as a fifth data path alongside the 45 native tools — beta, EndUser role only today",
+    ],
+    callout: "<strong>Demo hook:</strong> Switch to Security & MCP and point at the HIGH gap — this is the one thing that has to close before this goes multi-tenant."
+  },
+  {
+    title: "Compare Accounts",
+    points: [
+      "N-way admin/service account comparison (2-6 UPNs) — surfaces elevation-tier mismatches before an audit does",
+      "All account names, groups, and tier labels shown here are sample data — not real Allianz admin accounts",
+      "Elevation-Tier Mismatch: flags when accounts with the same job title/department hold different privilege tiers",
+      "Exclusive Access: shows which groups only one account in the comparison holds — useful for offboarding review",
+    ],
+    callout: "<strong>Demo hook:</strong> Point at the red-bordered mismatch table — this is the exact pattern that catches orphaned break-glass access."
+  },
+  {
+    title: "ATA Users Report",
+    points: [
+      "Merges every ATA-attributed person's accounts (AMC, AVCC, Rich Client, Mobile) under one identity — no more chasing 3 UPNs per person",
+      "By Person tab: cross-OE flags, 2nd-account detection, multi-device flags, compliance rollup — all sample data here",
+      "SCCM Shadow tab: fuzzy-matches AZL SCCM Rich Client records against Intune to find ATA people missing from Intune enrollment",
+      "Confidence tiers (HIGH/MEDIUM) reflect match quality — exact SAM match vs. name-fuzzy match",
+    ],
+    callout: "<strong>Demo hook:</strong> Switch to SCCM Shadow — this is the feature that found real coverage gaps between SCCM and Intune."
+  },
+  {
+    title: "Policy Intelligence — Compliance Audit",
+    points: [
+      "Two tabs: CIS Audit (AI narrative vs. generic CIS Benchmark areas) and Coverage Matrix (traceable match vs. Allianz's own internal control catalog)",
+      "CIS Audit: severity buckets (High/Medium/Low) with a specific CIS control number and remediation per finding — sample findings shown",
+      "Coverage Matrix: 348 real controls extracted from 9 internal Allianz IS Practice / AFRIS policy documents — not a generic benchmark opinion",
+      "Live catalog numbers: 2,090 policies synced, 211 matched at least one control, 547 total matches across 84 of 348 controls",
+      "Standards Coverage by OE table shows % of tenant-matched controls passed per category — a genuine OE-vs-OE comparison, not an absolute audit score",
+    ],
+    callout: "<strong>Demo hook:</strong> Switch to Coverage Matrix and point out the 84/348 stat — frame it as an honest audit signal: some gap is real policy absence, some is match-keyword tuning, and that's exactly the kind of thing worth reviewing with security SMEs."
+  },
+];
+
+// AI response scripts
+const AI_RESPONSES = {
+  "Which OE has the most noncompliant devices?": [
+    { type:"tool", text:"get_oe_scorecard(oe='all', metric='compliance')" },
+    { type:"text",  text:"<strong>AGCS</strong> leads in absolute count with 206 noncompliant devices (6.7% of their fleet — highest count in NA). By count:<br><br>1. <strong>AGCS</strong> — 206 noncompliant (6.7%)<br>2. <strong>AZT</strong> — 88 noncompliant (8.0%)<br>3. <strong>AZL</strong> — 52 noncompliant (1.5%)<br><br>By rate, <strong>AP-MEXICO</strong> is worst at 15.4% (19 devices) despite being one of the smallest OEs — worth flagging separately from the count-based ranking. AGCS's count also correlates with 59 AVCC users billed for admin privileges they don't hold — recommend cross-referencing with the Admin Report." },
+  ],
+  "Give me a health scorecard for AZL": [
+    { type:"tool", text:"get_fleet_summary(oe='AZL')" },
+    { type:"tool", text:"get_compliance_summary(oe='AZL')" },
+    { type:"tool", text:"get_staleness_summary(oe='AZL')" },
+    { type:"tool", text:"get_admin_report(oe='AZL')" },
+    { type:"tool", text:"get_billing_summary(oe='AZL')" },
+    { type:"text",  text:"<strong>AZL Health Scorecard</strong><br><hr style='border-color:rgba(255,255,255,0.1);margin:6px 0'>✅ <strong>Compliance:</strong> 91% (above 90% target)<br>✅ <strong>Active devices:</strong> 3,465 / 3,465 enrolled<br>⚠️ <strong>Stale &gt;30d:</strong> 370 devices (11%)<br>🔴 <strong>Non-standard names:</strong> 11 devices<br>🔴 <strong>No primary user:</strong> 15 devices<br>⚠️ <strong>Stale SI charges:</strong> 4 records ($76.8/mo)<br><br><em>Recommended action:</em> Prioritize the 15 no-primary-user devices — these are the highest-risk for unmanaged endpoints." },
+  ],
+  "How many devices are still on Windows 10?": [
+    { type:"tool", text:"get_os_breakdown(platform='Windows', os_filter='Win10')" },
+    { type:"text",  text:"<strong>524 devices</strong> are still on Windows 10 across NA OEs.<br><br>Breakdown by OE:<br>• AZL: 126 &nbsp;• ATA: 101 &nbsp;• AGCS: 77 &nbsp;• AZRA: 50<br>• AP-US: 45 &nbsp;• AP-CANADA: 39 &nbsp;• others: 86<br><br>⚠️ Windows 10 end-of-support: <strong>October 14, 2025</strong> (already past). These 524 devices are out of warranty for security patches. Recommend escalating the 77 AGCS devices — they are also noncompliant." },
+  ],
+  "What's the action plan for AGCS mobile?": [
+    { type:"tool", text:"get_ems_billing_reconciliation(oe='AGCS')" },
+    { type:"tool", text:"get_corp_mobile_summary(oe='AGCS')" },
+    { type:"text",  text:"<strong>AGCS Mobile Action Plan</strong><br><hr style='border-color:rgba(255,255,255,0.1);margin:6px 0'>🔴 <strong>undercharge</strong> — 3 corp devices active in Intune with no EMS SI (up to $57/mo unbilled)<br>🔴 <strong>no_device</strong> — 4 EMS SI records with no matching device (ghost charges)<br>⚠️ <strong>decommission</strong> — 1 device flagged for decom still active in Intune<br>⚠️ <strong>no_device_no_si</strong> — 2 users in COPE/COBO groups with no device AND no SI<br><br>Recommended: Send AGCS the device list for 'no_device' signal — these are the most straightforward disputes to raise with ServiceNow." },
+  ],
+  "Which admins have stale devices?": [
+    { type:"tool", text:"get_admin_report(compliance='noncompliant')" },
+    { type:"text",  text:"<strong>6 local admins</strong> have a stale primary device (>30d offline).<br><br>Top findings:<br>• <strong>AZL:</strong> 2 admins · avg 67d stale · 2 noncompliant<br>• <strong>ATA:</strong> 2 admins · avg 45d stale · 1 noncompliant<br>• <strong>AGCS:</strong> 1 admin · avg 89d stale · 1 noncompliant<br><br>🔴 <strong>Critical:</strong> 1 admin in AGCS has a device stale >90d AND noncompliant — this should be escalated immediately as it represents an unmanaged privileged account." },
+  ],
+  "Is the data ready to share?": [
+    { type:"tool", text:"preflight_check(scope='all_sources')" },
+    { type:"text",  text:"<strong>Preflight Check Results</strong><br><hr style='border-color:rgba(255,255,255,0.1);margin:6px 0'>✅ Device cache: 11,995 devices — refreshed 2h ago<br>✅ AMDB: 5,090 records — uploaded Jun 27<br>✅ AMC SI: 4,993 records — uploaded Jun 27<br>✅ EMS SI: 942 records — uploaded Jun 27<br>✅ SAP O2C: Jun 2026 — uploaded Jun 28<br>⚠️ Carrier data: Verizon loaded, AT&amp;T pending<br>⚠️ EMS rates: COPE/COBO/BYOD tiers TBD (pending Chris/Vivian)<br><br><strong>Verdict:</strong> Data is ready to share for AMC and AVCC findings. EMS mobile dollar figures should include a 'rates pending' caveat." },
+  ],
+};
+
+// ── OE Bar chart ─────────────────────────────────────────────────────────────
+function renderOeBars() {
+  const el = document.getElementById('oe-bars');
+  el.innerHTML = OE_DATA.map(r => {
+    const pct = (r.total / MAX_TOTAL * 100).toFixed(1);
+    const winPct = (r.win / r.total * 100).toFixed(0);
+    const macPct = (r.mac / r.total * 100).toFixed(0);
+    const avcPct = (r.avcc / r.total * 100).toFixed(0);
+    return `<div class="oe-bar-row">
+      <span class="oe-bar-label">${r.oe}</span>
+      <div class="oe-bar-track">
+        <div style="display:flex;height:100%;width:${pct}%;border-radius:2px;overflow:hidden;">
+          <div style="width:${winPct}%;background:#007ab3;" title="AMC Win: ${r.win.toLocaleString()}"></div>
+          <div style="width:${macPct}%;background:#a78bfa;" title="AMC Mac: ${r.mac.toLocaleString()}"></div>
+          <div style="width:${avcPct}%;background:#30d878;" title="AVCC: ${r.avcc.toLocaleString()}"></div>
+        </div>
+      </div>
+      <span class="oe-bar-count">${r.total.toLocaleString()}</span>
+    </div>`;
+  }).join('');
+  // legend
+  el.insertAdjacentHTML('afterend', `
+    <div style="display:flex;gap:14px;margin-top:10px;padding-top:8px;border-top:1px solid var(--border);">
+      <span style="font-size:10px;color:var(--text-dim);display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#007ab3;display:inline-block;"></span>AMC Windows</span>
+      <span style="font-size:10px;color:var(--text-dim);display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#a78bfa;display:inline-block;"></span>AMC macOS</span>
+      <span style="font-size:10px;color:var(--text-dim);display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#30d878;display:inline-block;"></span>AVCC Windows</span>
+    </div>`);
+}
+
+// ── OE Mission Control (3D globe) ─────────────────────────────────────────────
+let omcGlobe = null;
+let omcActiveOe = null;
+let omcRotateTimer = null;
+
+function omcLoc(oe) { return OE_LOCATIONS.find(l => l.oe === oe); }
+
+function omcInit() {
+  if (omcGlobe || typeof Globe === 'undefined') { omcRenderDetail(); return; }
+  const el = document.getElementById('omc-globe');
+  if (!el) return;
+  omcGlobe = Globe()(el)
+    .width(300).height(300)
+    .globeImageUrl('https://cdn.jsdelivr.net/npm/three-globe@2.45.2/example/img/earth-day.jpg')
+    .backgroundColor('rgba(0,0,0,0)')
+    .atmosphereColor('#38bdf8')
+    .atmosphereAltitude(0.14)
+    .showGraticules(false)
+    .htmlElementsData(OE_LOCATIONS)
+    .htmlLat('lat')
+    .htmlLng('lng')
+    .htmlAltitude(0.01)
+    .htmlElement(omcPinElement)
+    .arcsData(ARC_ROUTES.map(([a, b]) => {
+      const la = omcLoc(a), lb = omcLoc(b);
+      return { a, b, startLat: la.lat, startLng: la.lng, endLat: lb.lat, endLng: lb.lng };
+    }))
+    .arcColor(omcArcColor)
+    .arcAltitude(0.25)
+    .arcStroke(0.6)
+    .arcDashLength(0.4)
+    .arcDashGap(0.6)
+    .arcDashAnimateTime(2800)
+    .pointOfView({ lat: 38, lng: -90, altitude: 1.6 }, 0);
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') omcSelectOe(null); });
+  omcStartRotate();
+  omcRenderDetail();
+}
+
+function omcPinElement(d) {
+  const health = getOeHealth(d.oe);
+  const hColor = HEALTH_COLOR[health];
+  const isActive = omcActiveOe === d.oe;
+  const pulse = health === 'critical';
+  const c = OE_COMPLIANCE[d.oe];
+  const total = c ? c.compliant + c.grace + c.noncompliant : 0;
+  const ncPct = total ? Math.round(c.noncompliant / total * 100) : 0;
+  const el = document.createElement('div');
+  el.className = 'omc-pin' + (isActive ? ' omc-pin-active' : '');
+  el.innerHTML = `
+    <div class="omc-label" style="font-family:'IBM Plex Mono',monospace;font-size:${isActive ? 11 : 9}px;font-weight:${isActive ? 800 : 700};
+      color:#fff;background:${isActive ? hColor + 'ee' : 'rgba(4,10,24,0.82)'};
+      border:${isActive ? `2px solid ${hColor}` : `1px solid ${hColor}70`};
+      border-radius:5px;padding:${isActive ? '5px 11px' : '2px 6px'};white-space:nowrap;line-height:1.35;text-align:center;letter-spacing:0.06em;
+      box-shadow:${isActive ? `0 0 22px ${hColor}90,0 2px 8px rgba(0,0,0,0.7)` : `0 0 8px ${hColor}50`};
+      cursor:pointer;${pulse ? 'animation:omcPulse 2s ease-in-out infinite;' : ''}">
+      ${d.oe}${isActive ? `<div style="font-size:9px;font-weight:700;color:${hColor};margin-top:1px;letter-spacing:0.1em;">${ncPct === 0 ? '&#10003; HEALTHY' : ncPct + '% NC'}</div>` : ''}
+    </div>
+    <div style="width:2px;height:${isActive ? 22 : 14}px;background:linear-gradient(to bottom,${hColor},${hColor}30);${isActive ? `box-shadow:0 0 6px ${hColor}80;` : ''}"></div>
+    <div style="position:relative;width:${isActive ? 12 : 8}px;height:${isActive ? 12 : 8}px;">
+      ${pulse || isActive ? `<div style="position:absolute;inset:-2px;border-radius:50%;background:${hColor}40;border:1px solid ${hColor}70;animation:omcRing ${isActive ? '1.2' : '1.8'}s ease-out infinite;"></div>` : ''}
+      <div style="position:absolute;inset:0;border-radius:50%;background:${hColor};box-shadow:0 0 ${isActive ? 18 : 8}px ${hColor}${isActive ? 'ee' : 'aa'};"></div>
+    </div>
+  `;
+  el.addEventListener('mousedown', e => e.stopPropagation());
+  el.addEventListener('click', e => { e.stopPropagation(); omcSelectOe(d.oe); });
+  return el;
+}
+
+function omcArcColor(d) {
+  const active = omcActiveOe && (d.a === omcActiveOe || d.b === omcActiveOe);
+  return active ? ['#38bdf8', '#38bdf8'] : ['rgba(56,189,248,0.22)', 'rgba(56,189,248,0.08)'];
+}
+
+function omcStartRotate() {
+  omcStopRotate();
+  omcRotateTimer = setInterval(() => {
+    if (!omcGlobe) return;
+    const pov = omcGlobe.pointOfView();
+    omcGlobe.pointOfView({ lat: pov.lat, lng: pov.lng - 0.25, altitude: pov.altitude }, 0);
+  }, 30);
+}
+function omcStopRotate() { if (omcRotateTimer) { clearInterval(omcRotateTimer); omcRotateTimer = null; } }
+
+function omcRefreshPins() {
+  if (!omcGlobe) return;
+  omcGlobe.htmlElementsData([]);
+  requestAnimationFrame(() => omcGlobe.htmlElementsData(OE_LOCATIONS));
+}
+
+function omcSelectOe(oe) {
+  omcActiveOe = oe;
+  omcRefreshPins();
+  if (omcGlobe) {
+    if (omcGlobe.arcColor) omcGlobe.arcColor(omcArcColor);
+    if (oe) {
+      omcStopRotate();
+      const l = omcLoc(oe);
+      omcGlobe.pointOfView({ lat: l.lat, lng: l.lng, altitude: 1.2 }, 900);
+    } else {
+      omcStartRotate();
+    }
+  }
+  omcRenderDetail();
+}
+
+function omcOeButton(r) {
+  const c = OE_COMPLIANCE[r.oe];
+  const total = c.compliant + c.grace + c.noncompliant;
+  const ncPct = (c.noncompliant / total * 100).toFixed(1);
+  const health = getOeHealth(r.oe);
+  const hColor = HEALTH_COLOR[health];
+  return `<div class="omc-oe-btn" onclick="omcSelectOe('${r.oe}')">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:var(--text-primary);">${r.oe}</div>
+    <div style="font-size:9px;color:var(--text-dim);">${r.total.toLocaleString()} devices</div>
+    <div style="height:4px;border-radius:2px;overflow:hidden;display:flex;margin:4px 0 2px;background:var(--bg-input);">
+      <div style="width:${(c.compliant / total * 100).toFixed(1)}%;background:var(--green);"></div>
+      <div style="width:${(c.grace / total * 100).toFixed(1)}%;background:var(--yellow);"></div>
+      <div style="width:${(c.noncompliant / total * 100).toFixed(1)}%;background:var(--red);"></div>
+    </div>
+    <div style="font-size:9px;font-weight:700;color:${hColor};">${ncPct}% NC</div>
+  </div>`;
+}
+
+function omcRenderDetail() {
+  const el = document.getElementById('omc-detail');
+  if (!el) return;
+
+  if (!omcActiveOe) {
+    const naTotal = OE_DATA.reduce((s, r) => s + r.total, 0);
+    const naC = Object.values(OE_COMPLIANCE).reduce((s, c) => s + c.compliant, 0);
+    const naG = Object.values(OE_COMPLIANCE).reduce((s, c) => s + c.grace, 0);
+    const naN = Object.values(OE_COMPLIANCE).reduce((s, c) => s + c.noncompliant, 0);
+    el.innerHTML = `
+      <div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">NA Compliance — ${naTotal.toLocaleString()} devices</div>
+      <div style="height:10px;border-radius:4px;overflow:hidden;display:flex;margin-bottom:8px;">
+        <div style="width:${(naC / naTotal * 100).toFixed(1)}%;background:var(--green);"></div>
+        <div style="width:${(naG / naTotal * 100).toFixed(1)}%;background:var(--yellow);"></div>
+        <div style="width:${(naN / naTotal * 100).toFixed(1)}%;background:var(--red);"></div>
+      </div>
+      <div style="display:flex;gap:10px;font-size:9px;color:var(--text-dim);margin-bottom:12px;flex-wrap:wrap;">
+        <span>&#9679; Compliant ${naC.toLocaleString()}</span>
+        <span>&#9679; Grace ${naG.toLocaleString()}</span>
+        <span>&#9679; Noncompliant ${naN.toLocaleString()}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+        ${OE_DATA.map(r => omcOeButton(r)).join('')}
+      </div>`;
+    return;
+  }
+
+  const r = OE_DATA.find(x => x.oe === omcActiveOe);
+  const c = OE_COMPLIANCE[omcActiveOe];
+  const total = c.compliant + c.grace + c.noncompliant;
+  const health = getOeHealth(omcActiveOe);
+  const hColor = HEALTH_COLOR[health];
+  const cityEntry = omcLoc(omcActiveOe);
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+      <div style="font-size:20px;font-weight:800;font-family:Manrope,sans-serif;color:${hColor};letter-spacing:0.04em;">${omcActiveOe}</div>
+      <span class="badge" style="background:${hColor}22;color:${hColor};border:1px solid ${hColor}70;font-size:9px;">${health.toUpperCase()}</span>
+      <button onclick="omcSelectOe(null)" style="margin-left:auto;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;line-height:1;" title="Deselect">✕</button>
+    </div>
+    <div style="font-size:10px;color:var(--text-dim);margin-bottom:10px;">${cityEntry ? cityEntry.city : ''}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+      <div class="omc-kpi-tile"><div class="v" style="color:var(--accent);">${r.total.toLocaleString()}</div><div class="l">Managed devices</div></div>
+      <div class="omc-kpi-tile"><div class="v" style="color:${hColor};">${c.noncompliant}</div><div class="l">Noncompliant</div></div>
+    </div>
+    <div style="height:10px;border-radius:4px;overflow:hidden;display:flex;margin-bottom:6px;">
+      <div style="width:${(c.compliant / total * 100).toFixed(1)}%;background:var(--green);"></div>
+      <div style="width:${(c.grace / total * 100).toFixed(1)}%;background:var(--yellow);"></div>
+      <div style="width:${(c.noncompliant / total * 100).toFixed(1)}%;background:var(--red);"></div>
+    </div>
+    <div style="display:flex;gap:10px;font-size:9px;color:var(--text-dim);margin-bottom:12px;flex-wrap:wrap;">
+      <span>&#9679; Compliant ${c.compliant.toLocaleString()}</span>
+      <span>&#9679; Grace ${c.grace.toLocaleString()}</span>
+      <span>&#9679; Noncompliant ${c.noncompliant.toLocaleString()}</span>
+    </div>
+    <div style="font-size:10px;color:var(--text-secondary);margin-bottom:6px;">By device type</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+      <span class="badge badge-blue">AMC Win: ${r.win.toLocaleString()}</span>
+      ${r.mac ? `<span class="badge badge-blue">AMC Mac: ${r.mac.toLocaleString()}</span>` : ''}
+      ${r.avcc ? `<span class="badge badge-blue">AVCC: ${r.avcc.toLocaleString()}</span>` : ''}
+    </div>
+    <div style="font-size:9px;color:var(--text-dim);">Deep-link navigation is disabled in this static demo — use the sidebar tabs to explore related sections.</div>
+  `;
+}
+
+// ── Data-flow architecture diagram ───────────────────────────────────────────
+// Maps each node id → which source→hub and hub→signal paths to highlight
+const ARCH_MAP = {
+  // Source nodes: highlight their inbound path + hub + relevant output paths
+  'intune':    { src: ['path-intune-hub'], out: ['path-hub-bni','path-hub-stale','path-hub-si-gap','path-hub-active-no-si','path-hub-billed-no-si','path-hub-carrier'] },
+  'amdb':      { src: ['path-amdb-hub'],   out: ['path-hub-bni','path-hub-warranty'] },
+  'amc-si':    { src: ['path-amc-si-hub'], out: ['path-hub-si-gap','path-hub-active-no-si','path-hub-billed-no-si','path-hub-stale'] },
+  'avcc-si':   { src: ['path-avcc-si-hub'],out: ['path-hub-si-gap','path-hub-o2c'] },
+  'ems-si':    { src: ['path-ems-si-hub'], out: ['path-hub-active-no-si'] },
+  'o2c':       { src: ['path-o2c-hub'],    out: ['path-hub-o2c','path-hub-billed-no-si'] },
+  'carrier':   { src: ['path-carrier-hub'],out: ['path-hub-carrier'] },
+  'abm':       { src: ['path-abm-hub'],    out: ['path-hub-carrier'] },
+  // Signal nodes: highlight their inbound hub path
+  'bni':       { src: ['path-intune-hub','path-amdb-hub'],   out: ['path-hub-bni'] },
+  'stale':     { src: ['path-intune-hub','path-amc-si-hub'], out: ['path-hub-stale'] },
+  'si-gap':    { src: ['path-amc-si-hub','path-avcc-si-hub'],out: ['path-hub-si-gap'] },
+  'active-no-si':  { src: ['path-intune-hub','path-amc-si-hub','path-ems-si-hub'], out: ['path-hub-active-no-si'] },
+  'billed-no-si':  { src: ['path-intune-hub','path-amc-si-hub','path-o2c-hub'],    out: ['path-hub-billed-no-si'] },
+  'o2c-sig':   { src: ['path-o2c-hub','path-avcc-si-hub'],   out: ['path-hub-o2c'] },
+  'warranty':  { src: ['path-amdb-hub'],                     out: ['path-hub-warranty'] },
+  'carrier-sig':   { src: ['path-carrier-hub','path-abm-hub','path-intune-hub'], out: ['path-hub-carrier'] },
+  // Hub center: all paths
+  'hub': {
+    src: ['path-intune-hub','path-amdb-hub','path-amc-si-hub','path-avcc-si-hub','path-ems-si-hub','path-o2c-hub','path-carrier-hub','path-abm-hub'],
+    out: ['path-hub-bni','path-hub-stale','path-hub-si-gap','path-hub-active-no-si','path-hub-billed-no-si','path-hub-o2c','path-hub-warranty','path-hub-carrier']
+  }
+};
+
+const ARCH_TOOLTIPS = {
+  'intune':    'Microsoft Intune · 1,965 NA managed devices<br><span style="color:var(--text-dim);font-size:10px;">Live Graph API pull · refreshes on demand</span>',
+  'amdb':      'AMDB · 1,630 hardware assets<br><span style="color:var(--text-dim);font-size:10px;">Garrett\'s asset registry · monthly CSV upload</span>',
+  'amc-si':    'ServiceNow AMC SI · 776 records<br><span style="color:var(--text-dim);font-size:10px;">Service instances for AMC Windows + macOS</span>',
+  'avcc-si':   'ServiceNow AVCC SI · 450 records<br><span style="color:var(--text-dim);font-size:10px;">Service instances for Cloud PCs</span>',
+  'ems-si':    'ServiceNow EMS SI · 541 records<br><span style="color:var(--text-dim);font-size:10px;">MAMWE · COPE · COBO · BYOD · BYOD+</span>',
+  'o2c':       'SAP O2C Revenue · $422.6K WPS (4 months)<br><span style="color:var(--text-dim);font-size:10px;">Invoice qty by SAP material — monthly CSV</span>',
+  'carrier':   'Verizon / AT&T · 139 lines<br><span style="color:var(--text-dim);font-size:10px;">Carrier billing export — VZ + AT&T NA</span>',
+  'abm':       'Apple Business Manager · 212 NA devices<br><span style="color:var(--text-dim);font-size:10px;">ABM purchase records + DEP enrollment</span>',
+  'hub':       'Reconciliation Engine<br><span style="color:var(--text-dim);font-size:10px;">In-memory join across all sources · rebuilt on each refresh</span>',
+  'bni':       'Hardware · Not in Intune · 216<br><span style="color:var(--text-dim);font-size:10px;">AMDB "In Use" assets with no Intune match</span>',
+  'stale':     'Stale · Still Billed · 26 · $499/mo<br><span style="color:var(--text-dim);font-size:10px;">Devices >90d stale with active SI service charge</span>',
+  'si-gap':    'SI Coverage Gaps · 121<br><span style="color:var(--text-dim);font-size:10px;">Intune devices with no ServiceNow SI record</span>',
+  'active-no-si': 'Active · No SI · 171<br><span style="color:var(--text-dim);font-size:10px;">Active managed devices missing a service instance</span>',
+  'billed-no-si': 'Billed · No SI · 430<br><span style="color:var(--text-dim);font-size:10px;">O2C charges with no matching Intune device</span>',
+  'o2c-sig':   'O2C Qty Delta · 1 material row<br><span style="color:var(--text-dim);font-size:10px;">Invoice qty vs Intune count by SAP material</span>',
+  'warranty':  'Warranty Mismatch · 654<br><span style="color:var(--text-dim);font-size:10px;">AMDB warranty date vs Lenovo PSREF cross-check</span>',
+  'carrier-sig': 'Carrier Billing · 139 lines<br><span style="color:var(--text-dim);font-size:10px;">Verizon + AT&T line reconciliation vs Intune</span>',
+};
+
+let _archScope = 'na';
+
+function initArch() {
+  // no-op on re-entry; diagram is static SVG, just reset hover state
+  clearHover();
+}
+
+function hoverNode(nodeId) {
+  const map = ARCH_MAP[nodeId];
+  if (!map) return;
+
+  // Dim all paths first
+  document.querySelectorAll('.arch-path').forEach(p => {
+    p.classList.remove('active', 'signal-active');
+    p.style.stroke = 'rgba(255,255,255,0.05)';
+    p.style.strokeWidth = '1';
+    p.style.filter = '';
+  });
+  document.querySelectorAll('#arrow-marker').forEach(m => { m.setAttribute('fill','rgba(255,255,255,0.05)'); });
+
+  // Highlight source→hub paths (blue)
+  map.src.forEach(id => {
+    const p = document.getElementById(id);
+    if (!p) return;
+    p.style.stroke = '#007ab3';
+    p.style.strokeWidth = '2.5';
+    p.style.filter = 'drop-shadow(0 0 4px rgba(0,122,179,0.7))';
+    p.setAttribute('marker-end', 'url(#arrow-active)');
+  });
+
+  // Highlight hub→signal paths (green)
+  map.out.forEach(id => {
+    const p = document.getElementById(id);
+    if (!p) return;
+    p.style.stroke = '#30d878';
+    p.style.strokeWidth = '2';
+    p.style.filter = 'drop-shadow(0 0 4px rgba(48,216,120,0.5))';
+    p.setAttribute('marker-end', 'url(#arrow-signal)');
+  });
+
+  // Highlight the hovered node
+  const nodeEl = document.getElementById('src-' + nodeId) ||
+                 document.getElementById('sig-' + nodeId) ||
+                 document.getElementById('hub-center');
+  if (nodeEl) nodeEl.classList.add('hovered');
+
+  // Show tooltip
+  const tip = document.getElementById('arch-tooltip');
+  const canvas = document.getElementById('arch-canvas');
+  const tooltip = ARCH_TOOLTIPS[nodeId];
+  if (tip && tooltip) {
+    tip.innerHTML = tooltip;
+    tip.style.display = 'block';
+    // Position tooltip near the hub center by default
+    const rect = canvas.getBoundingClientRect();
+    tip.style.left = '45%';
+    tip.style.top = '8px';
+  }
+}
+
+function clearHover() {
+  // Restore all paths to default dim state
+  document.querySelectorAll('.arch-path').forEach(p => {
+    p.style.stroke = '';
+    p.style.strokeWidth = '';
+    p.style.filter = '';
+    p.setAttribute('marker-end', 'url(#arrow)');
+  });
+  document.querySelectorAll('.arch-node').forEach(n => n.classList.remove('hovered'));
+  const tip = document.getElementById('arch-tooltip');
+  if (tip) tip.style.display = 'none';
+}
+
+const ARCH_SCOPE_DATA = {
+  na:  { intune: '1,965 NA devices', o2c: '4 months · $422,570 WPS (NA)' },
+  all: { intune: '13,458 global devices', o2c: '4 months · $2.76M+ global' },
+};
+
+function setArchScope(scope) {
+  _archScope = scope;
+  document.getElementById('scope-na').classList.toggle('active', scope === 'na');
+  document.getElementById('scope-all').classList.toggle('active', scope === 'all');
+  const d = ARCH_SCOPE_DATA[scope];
+  const subIntune = document.getElementById('sub-intune');
+  const subO2c = document.getElementById('sub-o2c');
+  if (subIntune) subIntune.textContent = d.intune;
+  if (subO2c) subO2c.textContent = d.o2c;
+}
+
+// ── Findings table ────────────────────────────────────────────────────────────
+function renderFindings() {
+  const tb = document.getElementById('findings-tbody');
+  tb.innerHTML = FINDINGS.map(f => {
+    const expHtml = f.exp_usd
+      ? `<span style="font-weight:700;color:${f.sev==='high'?'var(--red)':f.sev==='medium'?'var(--orange)':'var(--yellow)'}">$${f.exp_usd.toLocaleString()}</span>`
+      : `<span style="color:var(--text-dim);">investigating</span>`;
+    const statusBadge = f.status==='confirmed'
+      ? `<span class="badge badge-red">CONFIRMED</span>`
+      : `<span class="badge badge-orange">INVESTIGATING</span>`;
+    return `<tr style="cursor:pointer;" onclick="toggleFindingDetail('${f.id}')">
+      <td><span style="font-family:'Courier New',monospace;font-size:10px;color:var(--text-muted);">${f.id}</span></td>
+      <td style="font-weight:600;">${f.signal}</td>
+      <td><span class="badge badge-gray" style="font-size:8px;">${f.cat}</span></td>
+      <td style="font-weight:700;color:var(--text-heading);">${f.count.toLocaleString()}</td>
+      <td>${expHtml}</td>
+      <td>${statusBadge}</td>
+    </tr>
+    <tr id="fd-${f.id}" style="display:none;">
+      <td colspan="6" style="padding:10px 14px;background:rgba(0,122,179,0.05);border-bottom:1px solid var(--accent-border);">
+        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:6px;">
+          ${f.id} — <strong>${f.signal}</strong>: ${f.count.toLocaleString()} records ${f.exp_usd?'· <strong style=color:'+f.color+'>$'+f.exp_usd.toLocaleString()+'/mo confirmed exposure</strong>':''}</div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-ghost" style="font-size:9px;padding:3px 8px;">⬇ Export CSV</button>
+          <button class="btn-ghost" style="font-size:9px;padding:3px 8px;">⬇ Export XLSX</button>
+          <button class="btn-primary" style="font-size:9px;padding:3px 8px;">Route to Watchlist →</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function toggleFindingDetail(id) {
+  const row = document.getElementById('fd-' + id);
+  row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+}
+
+let allExpanded = false;
+function toggleAllFindings() {
+  allExpanded = !allExpanded;
+  FINDINGS.forEach(f => {
+    const row = document.getElementById('fd-' + f.id);
+    if (row) row.style.display = allExpanded ? 'table-row' : 'none';
+  });
+  document.querySelector('[onclick="toggleAllFindings()"]').textContent =
+    allExpanded ? '▲ Collapse All' : '▶ Expand All';
+}
+
+// ── Watchlist signals ─────────────────────────────────────────────────────────
+function watchSection(section) {
+  ['hygiene','billing'].forEach(s => {
+    document.getElementById('sidebar-' + s).style.display = s === section ? 'block' : 'none';
+    document.getElementById('ws-' + s).classList.toggle('active', s === section);
+  });
+  // show first signal of that section
+  showSignal(section === 'hygiene' ? 'stale_dups' : 'stale_billed');
+  // reset active state
+  document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+}
+
+function showSignal(key) {
+  const sig = SIGNALS[key];
+  if (!sig) return;
+
+  // Update sidebar active
+  document.querySelectorAll('.sidebar-item').forEach(el => {
+    el.classList.toggle('active', el.getAttribute('onclick') === `showSignal('${key}')`);
+  });
+
+  const tableBody = buildSignalTable(key, sig);
+  const expColor = sig.exposure ? (sig.exposure.includes('TBD') ? 'var(--text-muted)' : sig.color) : 'var(--text-dim)';
+
+  document.getElementById('signal-panel').innerHTML = `
+    <div class="signal-detail-header">
+      <div class="signal-big-count" style="color:${sig.color};">${sig.count.toLocaleString()}</div>
+      <div class="signal-info-block">
+        <div class="signal-title">${sig.title}</div>
+        <div class="signal-description">${sig.desc}</div>
+        <div style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+          <button class="btn-ghost" style="font-size:9px;padding:3px 8px;">⬇ Export CSV</button>
+          <button class="btn-ghost" style="font-size:9px;padding:3px 8px;">⬇ Export XLSX</button>
+        </div>
+      </div>
+      ${sig.exposure ? `<div class="signal-exposure-tag" style="color:${expColor};border-color:${expColor}40;background:${expColor}12;">${sig.exposure}</div>` : ''}
+    </div>
+    ${tableBody}`;
+}
+
+function buildSignalTable(key, sig) {
+  if (!sig.rows || sig.rows.length === 0) return '<div style="color:var(--text-dim);font-size:12px;">No records.</div>';
+  const r = sig.rows[0];
+
+  if (key === 'stale_dups' || key === 'stale_billed' || key === 'dup_serial_si') {
+    return `<table class="data-table">
+      <thead><tr><th>Device Name</th><th>UPN</th><th>OE</th><th>Last Sync</th><th>Compliance</th><th>Staleness</th></tr></thead>
+      <tbody>${sig.rows.map(d=>`<tr>
+        <td style="font-family:'Courier New',monospace;font-size:11px;">${d.device||d.device_name||''}</td>
+        <td style="font-size:11px;color:var(--text-secondary);">${d.upn}</td>
+        <td><span class="badge badge-gray">${d.oe}</span></td>
+        <td style="font-size:11px;">${d.last_sync||''}</td>
+        <td><span class="badge ${d.compliance==='Compliant'?'badge-green':d.compliance==='InGracePeriod'?'badge-yellow':'badge-red'}">${d.compliance||''}</span></td>
+        <td><span class="badge ${(d.stale||d.days_stale>90)?'badge-red':(d.days_stale>60)?'badge-orange':'badge-yellow'}">${d.stale||((d.days_stale||0)+'d stale')}</span></td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+
+  if (key === 'no_device' || key === 'mdm_orphans') {
+    const cols = key === 'mdm_orphans'
+      ? `<th>UPN</th><th>OE</th><th>Group</th><th>Enrolled Type</th>`
+      : `<th>UPN</th><th>OE</th><th>Group</th><th>Last Seen</th>`;
+    return `<table class="data-table">
+      <thead><tr>${cols}</tr></thead>
+      <tbody>${sig.rows.map(d=>`<tr>
+        <td style="font-size:11px;">${d.upn}</td>
+        <td><span class="badge badge-gray">${d.oe}</span></td>
+        <td style="font-size:11px;color:var(--text-dim);">${d.group}</td>
+        <td>${key==='mdm_orphans'?`<span class="badge badge-blue">${d.enrolled_type}</span>`:`<span style="font-size:11px;color:${d.last_seen==='never'?'var(--red)':'var(--text-secondary)'};">${d.last_seen}</span>`}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+
+  if (key === 'orphaned') {
+    return `<table class="data-table">
+      <thead><tr><th>Device Name</th><th>UPN</th><th>OE</th><th>Last Sync</th><th>Compliance</th></tr></thead>
+      <tbody>${sig.rows.map(d=>`<tr>
+        <td style="font-family:'Courier New',monospace;font-size:11px;">${d.device}</td>
+        <td style="font-size:11px;color:var(--text-secondary);">${d.upn}</td>
+        <td><span class="badge badge-gray">${d.oe}</span></td>
+        <td style="font-size:11px;">${d.last_sync}</td>
+        <td><span class="badge ${d.compliance==='Compliant'?'badge-green':d.compliance==='InGracePeriod'?'badge-yellow':'badge-red'}">${d.compliance||''}</span></td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+
+  if (key === 'si_no_intune') {
+    return `<table class="data-table">
+      <thead><tr><th>Serial</th><th>UPN</th><th>OE</th><th>Status</th><th>SI Since</th></tr></thead>
+      <tbody>${sig.rows.map(d=>`<tr>
+        <td style="font-family:'Courier New',monospace;font-size:11px;">${d.serial}</td>
+        <td style="font-size:11px;">${d.upn}</td>
+        <td><span class="badge badge-gray">${d.oe}</span></td>
+        <td><span class="badge ${d.status==='Missing'?'badge-red':d.status==='Stale'?'badge-orange':'badge-yellow'}">${d.status}</span></td>
+        <td style="font-size:11px;color:var(--text-dim);">${d.si_since}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+
+  if (key === 'warranty_mismatch') {
+    return `<table class="data-table">
+      <thead><tr><th>Device</th><th>Serial</th><th>OE</th><th>AMDB Date</th><th>PSREF Date</th><th>Type</th><th>Delta</th></tr></thead>
+      <tbody>${sig.rows.map(d=>`<tr>
+        <td style="font-family:'Courier New',monospace;font-size:11px;">${d.device}</td>
+        <td style="font-family:'Courier New',monospace;font-size:10px;color:var(--text-dim);">${d.serial}</td>
+        <td><span class="badge badge-gray">${d.oe}</span></td>
+        <td style="font-size:11px;">${d.amdb_warranty}</td>
+        <td style="font-size:11px;">${d.psref_warranty}</td>
+        <td><span class="badge ${d.type==='Undercharge'?'badge-orange':'badge-red'}">${d.type}</span></td>
+        <td style="font-weight:700;color:${d.type==='Undercharge'?'var(--orange)':'var(--red)'};">${d.delta}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+
+  if (key === 'stock_active_si') {
+    return `<table class="data-table">
+      <thead><tr><th>Serial</th><th>OE</th><th>AMDB Status</th><th>SI Status</th><th>Monthly Charge</th></tr></thead>
+      <tbody>${sig.rows.map(d=>`<tr>
+        <td style="font-family:'Courier New',monospace;font-size:11px;">${d.serial}</td>
+        <td><span class="badge badge-gray">${d.oe}</span></td>
+        <td><span class="badge badge-yellow">${d.amdb_status}</span></td>
+        <td><span class="badge badge-red">${d.si_status}</span></td>
+        <td style="font-weight:700;color:var(--red);">${d.charge}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+
+  if (key === 'ems_si_no_device') {
+    return `<table class="data-table">
+      <thead><tr><th>UPN</th><th>OE</th><th>SI Type</th><th>SI Since</th><th>Intune Status</th></tr></thead>
+      <tbody>${sig.rows.map(d=>`<tr>
+        <td style="font-size:11px;">${d.upn}</td>
+        <td><span class="badge badge-gray">${d.oe}</span></td>
+        <td><span class="badge badge-purple">${d.si_type}</span></td>
+        <td style="font-size:11px;color:var(--text-dim);">${d.si_since}</td>
+        <td><span class="badge ${d.intune_status==='Missing'?'badge-red':'badge-orange'}">${d.intune_status}</span></td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+
+  return '<div style="color:var(--text-dim);font-size:12px;">Select a signal to view records.</div>';
+}
+
+// ── Anomaly toggles ───────────────────────────────────────────────────────────
+function toggleAnomalyDetail(id) {
+  const el = document.getElementById('detail-' + id);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+// ── Chat ──────────────────────────────────────────────────────────────────────
+function chatKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+}
+
+function sendChat() {
+  const inp = document.getElementById('chat-input');
+  const q = inp.value.trim();
+  if (!q) return;
+  inp.value = '';
+  appendMsg('user', q);
+  simulateResponse(q);
+}
+
+function demoChat(q) {
+  appendMsg('user', q);
+  simulateResponse(q);
+}
+
+function appendMsg(role, html) {
+  const area = document.getElementById('chat-area');
+  const div = document.createElement('div');
+  div.className = 'chat-msg ' + role;
+  div.innerHTML = `<div class="bubble ${role}">${html}</div>`;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+function simulateResponse(q) {
+  const script = AI_RESPONSES[q];
+  const area = document.getElementById('chat-area');
+
+  // typing indicator
+  const typingDiv = document.createElement('div');
+  typingDiv.className = 'chat-msg assistant';
+  typingDiv.id = 'typing-ind';
+  typingDiv.innerHTML = `<div class="bubble assistant"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div>`;
+  area.appendChild(typingDiv);
+  area.scrollTop = area.scrollHeight;
+
+  if (!script) {
+    setTimeout(() => {
+      typingDiv.remove();
+      appendMsg('assistant', `I can answer questions about your fleet. Try: <em>Which OE has the most noncompliant devices?</em> or <em>Is the data ready to share?</em>`);
+    }, 900);
+    return;
+  }
+
+  let delay = 800;
+  script.forEach((step, i) => {
+    setTimeout(() => {
+      if (i === 0) typingDiv.remove();
+      if (step.type === 'tool') {
+        appendMsg('assistant', `<div class="tool-call">🔧 ${step.text}</div>`);
+      } else {
+        appendMsg('assistant', step.text);
+      }
+    }, delay);
+    delay += step.type === 'tool' ? 500 : 1200;
+  });
+}
+
+// ── Slide navigation ──────────────────────────────────────────────────────────
+const SLIDE_IDS = ['slide-dashboard', 'slide-reconciliation', 'slide-watchlist', 'slide-journey', 'slide-assistant', 'slide-architecture', 'slide-compare', 'slide-atausers', 'slide-cis'];
+let currentSlide = 0;
+
+function goTo(idx) {
+  const slides = document.querySelectorAll('.slide');
+  const thumbs  = document.querySelectorAll('.thumb');
+  slides.forEach((s, i) => s.classList.toggle('active', i === idx));
+  thumbs.forEach((t, i) => t.classList.toggle('active', i === idx));
+  currentSlide = idx;
+  document.getElementById('slide-counter').textContent = `${idx + 1} / ${slides.length}`;
+  document.getElementById('btn-prev').disabled = idx === 0;
+  document.getElementById('btn-next').disabled = idx === slides.length - 1;
+  renderNotes(idx);
+  if (idx === 0) { renderOeBars(); omcInit(); }
+  if (idx === 1) initArch();
+  if (idx === 2) showSignal('stale_dups');
+  if (idx === 3) journeyTab('dept');
+  if (idx === 7) ataTab('person');
+}
+
+function navigate(dir) { goTo(Math.max(0, Math.min(SLIDE_IDS.length - 1, currentSlide + dir))); }
+
+// ── Notes ─────────────────────────────────────────────────────────────────────
+function renderNotes(idx) {
+  const n = NOTES[idx];
+  if (!n) return;
+  document.getElementById('notes-body').innerHTML = `
+    <div class="note-section">
+      <div class="note-label">Key Points</div>
+      ${n.points.map(p => `<div class="note-point">${p}</div>`).join('')}
+    </div>
+    ${n.callout ? `<div class="note-callout">${n.callout}</div>` : ''}`;
+}
+
+let notesVisible = true;
+function toggleNotes() {
+  notesVisible = !notesVisible;
+  const panel = document.getElementById('notes-panel');
+  panel.style.display = notesVisible ? '' : 'none';
+  const ma = document.getElementById('main-area');
+  ma.style.gridTemplateColumns = notesVisible ? '168px 1fr 260px' : '168px 1fr 0';
+  document.getElementById('notes-toggle-btn').classList.toggle('active', notesVisible);
+}
+
+// ── Present mode ──────────────────────────────────────────────────────────────
+function togglePresent() {
+  const shell = document.getElementById('shell');
+  const isPresent = shell.classList.toggle('present-mode');
+  document.getElementById('present-btn').classList.toggle('active', isPresent);
+  if (isPresent) {
+    document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
+  } else {
+    document.exitFullscreen && document.exitFullscreen();
+  }
+}
+
+// ── Keyboard ──────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  const tag = document.activeElement.tagName.toLowerCase();
+  if (tag === 'textarea' || tag === 'input') return;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown')  navigate(1);
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')    navigate(-1);
+  if (e.key === 'f' || e.key === 'F') togglePresent();
+  if (e.key === 'Escape') {
+    const shell = document.getElementById('shell');
+    if (shell.classList.contains('present-mode')) togglePresent();
+  }
+});
+
+// ── Dashboard filter ──────────────────────────────────────────────────────────
+const FILTER_STATE = { amc:true, avcc:true, ems:true };
+function dashFilter(type) {
+  FILTER_STATE[type] = !FILTER_STATE[type];
+  document.getElementById('filter-' + type).classList.toggle('active', FILTER_STATE[type]);
+  updateKpis();
+}
+function updateDashScope(scope) {
+  document.getElementById('kpi-total').textContent = scope === 'na' ? '11,995' : '80,982';
+}
+function updateKpis() {
+  // Simple demo toggle — in reality would re-filter the OE bars
+  const any = Object.values(FILTER_STATE).some(v => v);
+  if (!any) {
+    document.getElementById('kpi-total').textContent = '0';
+  } else {
+    document.getElementById('kpi-total').textContent = '11,995';
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+goTo(0);
+</script>
+</body>
+</html>
