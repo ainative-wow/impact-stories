@@ -1,0 +1,342 @@
+<!--
+  5 KEY TAKEAWAYS — AI-Native Delivery
+  Self-contained page: HTML + CSS + JS, no external dependencies except two Google Fonts.
+
+  HOW TO EMBED IN SHAREPOINT
+  1) Easiest (Modern SharePoint): add an "Embed" web part to the page, choose
+     "Embed code" and paste an <iframe> snippet, OR host this file in a
+     document library / Site Assets and point the Embed web part's "Link"
+     field at its URL.
+        <iframe src="https://YOURSITE/SiteAssets/five-takeaways.html"
+                style="width:100%;height:720px;border:0;"></iframe>
+  2) Classic SharePoint / Script Editor web part: paste this whole file's
+     contents directly into the Script Editor / Content Editor web part.
+  3) If your tenant blocks inline <script> in Script Editor, host the file in
+     a library (as in option 1) and embed via iframe instead.
+  Adjust the iframe height to match content; the page is responsive.
+-->
+<div id="ant-fivetakeaways-root">
+<style>
+  #ant-fivetakeaways-root {
+    --bg: #0a0b10;
+    --surface: #161826;
+    --surface-raised: #1e2136;
+    --line: rgba(255,255,255,0.10);
+    --line-strong: rgba(255,255,255,0.22);
+    --text: #f0f2f7;
+    --text-dim: #a3aaba;
+    --text-faint: #6b7284;
+    --cyan: #26e0ff;
+    --violet: #b083ff;
+    --font-display: 'Space Grotesk', 'Segoe UI', sans-serif;
+    --font-body: 'Inter', 'Segoe UI', sans-serif;
+    --font-mono: 'IBM Plex Mono', 'Consolas', monospace;
+
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    padding: 0 0 80px 0;
+  }
+  #ant-fivetakeaways-root *,
+  #ant-fivetakeaways-root *::before,
+  #ant-fivetakeaways-root *::after { box-sizing: border-box; }
+
+  #ant-fivetakeaways-root .wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+
+  /* ---------- HERO ---------- */
+  #ant-fivetakeaways-root .hero {
+    position: relative;
+    padding: 88px 0 56px 0;
+    border-bottom: 1px solid var(--line);
+    background:
+      radial-gradient(620px 320px at 12% 0%, rgba(38,224,255,0.16), transparent 60%),
+      radial-gradient(520px 300px at 92% 30%, rgba(176,131,255,0.14), transparent 60%);
+  }
+  #ant-fivetakeaways-root .meta-line {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    letter-spacing: 0.04em;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+  #ant-fivetakeaways-root .meta-line .dot { color: var(--cyan); }
+  #ant-fivetakeaways-root .hero h1 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(38px, 6vw, 58px);
+    letter-spacing: -0.01em;
+    line-height: 1.04;
+    margin: 0 0 18px 0;
+    max-width: 11ch;
+    background: linear-gradient(100deg, var(--text) 40%, var(--cyan) 75%, var(--violet) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  #ant-fivetakeaways-root .hero .sub {
+    font-size: 18px;
+    color: var(--text-dim);
+    max-width: 46ch;
+    margin: 0;
+  }
+
+  /* ---------- STAGE ---------- */
+  #ant-fivetakeaways-root .stage-section { padding: 56px 0 0 0; }
+
+  #ant-fivetakeaways-root .chip-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+  #ant-fivetakeaways-root .chip {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-faint);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+  }
+  #ant-fivetakeaways-root .chip:hover { border-color: var(--line-strong); color: var(--text); }
+  #ant-fivetakeaways-root .chip.active {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    background: rgba(38,224,255,0.10);
+    box-shadow: 0 0 0 3px rgba(38,224,255,0.12);
+  }
+  #ant-fivetakeaways-root .chip:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+  #ant-fivetakeaways-root .stage {
+    position: relative;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background:
+      radial-gradient(480px 240px at 100% 0%, rgba(176,131,255,0.10), transparent 60%),
+      var(--surface);
+    padding: 56px 64px;
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+  }
+  #ant-fivetakeaways-root .stage-num {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 108px;
+    line-height: 1;
+    color: transparent;
+    -webkit-text-stroke: 1.5px rgba(38,224,255,0.35);
+    position: absolute;
+    top: 24px;
+    right: 40px;
+    letter-spacing: -0.02em;
+    user-select: none;
+  }
+  #ant-fivetakeaways-root .stage-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--violet);
+    letter-spacing: 0.03em;
+    margin-bottom: 18px;
+  }
+  #ant-fivetakeaways-root .stage-text {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(24px, 3.4vw, 32px);
+    line-height: 1.28;
+    max-width: 20ch;
+    position: relative;
+    z-index: 1;
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  #ant-fivetakeaways-root .stage-text.show {
+    animation: ft-rise 0.32s ease forwards;
+  }
+  @keyframes ft-rise {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  #ant-fivetakeaways-root .stage-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 28px;
+  }
+  #ant-fivetakeaways-root .arrow-btn {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: border-color 0.18s ease, color 0.18s ease;
+  }
+  #ant-fivetakeaways-root .arrow-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+  #ant-fivetakeaways-root .arrow-btn:disabled { opacity: 0.3; cursor: default; }
+  #ant-fivetakeaways-root .arrow-btn:disabled:hover { border-color: var(--line-strong); color: var(--text-dim); }
+
+  #ant-fivetakeaways-root .dots { display: flex; gap: 8px; }
+  #ant-fivetakeaways-root .dots .d {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--line-strong);
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+  #ant-fivetakeaways-root .dots .d.active {
+    background: var(--cyan);
+    transform: scale(1.5);
+  }
+
+  #ant-fivetakeaways-root .hint {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-faint);
+    margin-top: 18px;
+    text-align: center;
+  }
+
+  /* ---------- FOOTER ---------- */
+  #ant-fivetakeaways-root .foot {
+    margin-top: 56px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-faint);
+  }
+
+  @media (max-width: 620px) {
+    #ant-fivetakeaways-root .hero { padding: 56px 0 40px 0; }
+    #ant-fivetakeaways-root .stage { padding: 40px 24px; min-height: 220px; }
+    #ant-fivetakeaways-root .stage-num { font-size: 64px; top: 14px; right: 20px; }
+    #ant-fivetakeaways-root .chip { width: 38px; height: 38px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #ant-fivetakeaways-root * { transition: none !important; animation: none !important; }
+    #ant-fivetakeaways-root .stage-text { opacity: 1; transform: none; }
+  }
+</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<div class="hero">
+  <div class="wrap">
+    <div class="meta-line"><span class="dot">●</span> AI-NATIVE DELIVERY <span>//</span> 05 TAKEAWAYS</div>
+    <h1>5 key takeaways</h1>
+    <p class="sub">Five key takeaways.</p>
+  </div>
+</div>
+
+<div class="wrap stage-section">
+  <div class="chip-row" id="ft-chips"></div>
+
+  <div class="stage">
+    <div class="stage-num" id="ft-stage-num">01</div>
+    <div class="stage-eyebrow" id="ft-stage-eyebrow">TAKEAWAY 01 / 05</div>
+    <div class="stage-text show" id="ft-stage-text"></div>
+    <div class="stage-controls">
+      <button class="arrow-btn" id="ft-prev">← Previous</button>
+      <div class="dots" id="ft-dots"></div>
+      <button class="arrow-btn" id="ft-next">Next →</button>
+    </div>
+  </div>
+
+  <div class="hint">use ← → or click the numbers above to move between takeaways</div>
+
+  <div class="foot">
+    ↳ Content shown here is exactly as provided, with no added detail or interpretation.
+  </div>
+</div>
+</div>
+
+<script>
+(function() {
+  // Exact statements as provided — no added or altered wording.
+  var takeaways = [
+    'Clear Intent definitions are the foundation of AI-Native delivery success.',
+    'A shared specification repository creates transparency and reduces dependency on meetings.',
+    'Human approval checkpoints remain critical for quality and accountability.',
+    'AI-Native transformation is as much a people and collaboration change as a technology change.',
+    'Even teams starting without domain knowledge can accelerate onboarding through specification-driven delivery.'
+  ];
+
+  var current = 0;
+  var chipsRow = document.getElementById('ft-chips');
+  var dotsRow = document.getElementById('ft-dots');
+  var stageNum = document.getElementById('ft-stage-num');
+  var stageEyebrow = document.getElementById('ft-stage-eyebrow');
+  var stageText = document.getElementById('ft-stage-text');
+  var prevBtn = document.getElementById('ft-prev');
+  var nextBtn = document.getElementById('ft-next');
+
+  takeaways.forEach(function(_, i) {
+    var chip = document.createElement('button');
+    chip.className = 'chip';
+    chip.textContent = String(i + 1).padStart(2, '0');
+    chip.setAttribute('aria-label', 'Go to takeaway ' + (i + 1));
+    chip.addEventListener('click', function() { goTo(i); });
+    chipsRow.appendChild(chip);
+
+    var dot = document.createElement('div');
+    dot.className = 'd';
+    dotsRow.appendChild(dot);
+  });
+
+  function render() {
+    Array.prototype.forEach.call(chipsRow.children, function(chip, i) {
+      chip.classList.toggle('active', i === current);
+    });
+    Array.prototype.forEach.call(dotsRow.children, function(dot, i) {
+      dot.classList.toggle('active', i === current);
+    });
+    stageNum.textContent = String(current + 1).padStart(2, '0');
+    stageEyebrow.textContent = 'TAKEAWAY ' + String(current + 1).padStart(2, '0') + ' / 05';
+    stageText.textContent = takeaways[current];
+    stageText.classList.remove('show');
+    // restart animation
+    void stageText.offsetWidth;
+    stageText.classList.add('show');
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current === takeaways.length - 1;
+  }
+
+  function goTo(i) {
+    current = Math.max(0, Math.min(takeaways.length - 1, i));
+    render();
+  }
+
+  prevBtn.addEventListener('click', function() { goTo(current - 1); });
+  nextBtn.addEventListener('click', function() { goTo(current + 1); });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight') goTo(current + 1);
+    if (e.key === 'ArrowLeft') goTo(current - 1);
+  });
+
+  render();
+})();
+</script>
+</div>
