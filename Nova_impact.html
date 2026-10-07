@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>More delivery. Less overhead. Stronger ownership.</title>
+<style>
+:root{
+  --bg:#e8ecf2;--paper:#fbfcfe;--bg-2:#ffffff;--bg-3:#eef2f8;
+  --line:#dce2eb;--line-2:#c3cddb;
+  --text:#0e1a2b;--mute:#52637a;--dim:#8a98ab;
+  --blue:#2450f5;--mint:#00957a;--amber:#d97500;--amber-soft:rgba(217,117,0,.09);
+  --sans:"Segoe UI Variable Display","Segoe UI Variable","Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:inherit}
+:focus-visible{outline:2px solid var(--blue);outline-offset:3px;border-radius:6px}
+.ic{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+#stage{position:absolute;left:50%;top:calc(50% - 26px);width:960px;height:960px;transform-origin:center;background:var(--paper);border:1px solid var(--line-2);border-radius:28px;overflow:hidden;box-shadow:0 30px 80px -40px rgba(14,26,43,.35);
+  background-image:radial-gradient(circle,rgba(14,26,43,.07) 1px,transparent 1.2px);background-size:24px 24px}
+.slide{position:absolute;inset:0;padding:44px 48px 40px;display:flex;flex-direction:column;opacity:0;visibility:hidden;transform:translateX(18px);transition:opacity .5s var(--ease),transform .5s var(--ease),visibility 0s .5s}
+.slide.on{opacity:1;visibility:visible;transform:none;transition-delay:0s}
+.slide.prev{transform:translateX(-18px)}
+
+/* header + notes pattern */
+.kick{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--mute);margin-bottom:12px}
+.kick .num{font-variant-numeric:tabular-nums;color:var(--blue);font-weight:600}
+.kick::after{content:"";flex:1;height:1px;background:var(--line-2)}
+h2{font-size:40px;line-height:1.08;letter-spacing:-.032em;font-weight:650;max-width:760px}
+.lede{font-size:17px;line-height:1.5;color:var(--mute);max-width:780px;margin-top:12px}
+.notes{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;margin-top:auto;padding-top:20px;border-top:1px solid var(--line-2)}
+.note h4{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:650;letter-spacing:-.01em;margin-bottom:6px}
+.note h4 .ic{color:var(--blue)}
+.note p{font-size:14px;line-height:1.5;color:var(--mute)}
+.vis{flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0;padding:14px 0}
+
+/* nav (outside stage) */
+.nav{position:fixed;left:0;right:0;bottom:0;height:52px;display:flex;align-items:center;justify-content:center;gap:16px;z-index:5}
+.nav .arrow{width:34px;height:34px;border:1px solid var(--line-2);border-radius:50%;display:grid;place-items:center;color:var(--mute);background:var(--paper);transition:.3s}
+.nav .arrow:hover:not(:disabled){color:var(--blue);border-color:var(--blue)}
+.nav button:disabled{opacity:.35;cursor:default}
+.dots{display:flex;gap:8px}
+.dots button{width:28px;height:5px;border-radius:3px;background:var(--line-2);transition:.4s var(--ease)}
+.dots button.on{background:var(--blue);width:44px}
+.count{color:var(--mute);font-size:13px;min-width:44px;text-align:center}
+
+/* segmented */
+.seg{display:inline-flex;border:1px solid var(--line-2);border-radius:999px;padding:3px;background:var(--bg-2);flex:none}
+.seg button{padding:6px 18px;border-radius:999px;color:var(--mute);font-size:14px;transition:.3s var(--ease)}
+.seg button[aria-checked="true"]{background:var(--text);color:#fff}
+.row{display:flex;justify-content:space-between;align-items:flex-start;gap:24px}
+
+/* 1 hero */
+h1{font-size:68px;line-height:1.02;letter-spacing:-.04em;font-weight:650}
+h1 span{display:block}
+h1 .l2{color:#8493a8}
+h1 .l3{color:var(--blue)}
+.syms{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin-top:20px}
+.syms li{display:flex;align-items:center;gap:7px;padding:6px 12px 6px 9px;border:1px solid var(--line-2);border-radius:999px;font-size:13px;color:var(--mute);background:var(--bg-2);transition:.3s var(--ease)}
+.syms li:hover{border-color:var(--blue);color:var(--text);transform:translateY(-2px)}
+.syms .ic{color:var(--blue)}
+#heroFlow{width:100%;height:auto;display:block;overflow:visible}
+.fn-ring{transform-box:fill-box;transform-origin:center;animation:ring 2s var(--ease) infinite;opacity:0}
+@keyframes ring{0%{transform:scale(.9);opacity:.7}70%,100%{transform:scale(1.7);opacity:0}}
+
+/* 2 change */
+.chg{display:grid;grid-template-columns:400px 1fr;gap:30px;align-items:center}
+#netA{width:100%;height:auto;display:block;overflow:visible}
+.chg h3{font-size:24px;line-height:1.18;letter-spacing:-.025em;font-weight:650}
+.chg p{color:var(--mute);font-size:15px;line-height:1.5;margin-top:8px;min-height:68px}
+.tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:5px 11px;border-radius:999px;border:1px solid var(--line-2);color:var(--mute);background:var(--bg-2)}
+.tag.warn{color:var(--amber);border-color:rgba(217,117,0,.45)}
+.tag.good{color:var(--mint);border-color:rgba(0,149,122,.45)}
+.lane{list-style:none;display:flex;align-items:flex-start;justify-content:space-between;border-top:1px solid var(--line);padding-top:16px;margin-top:16px;min-height:104px}
+.lane .step{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;width:92px;font-size:13px;animation:pop .6s var(--ease) both}
+.lane .tile{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;border:1px solid var(--line-2);background:var(--bg-2)}
+.lane .link{flex:1;height:48px;display:flex;align-items:center;min-width:18px;animation:pop .6s var(--ease) both}
+.lane .link::before{content:"";flex:1;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--line-2),var(--mint),var(--line-2));background-size:200% 100%;animation:slide 2.4s linear infinite}
+.lane .link.ho{flex-direction:column;justify-content:center;color:var(--amber);font-size:11px;gap:1px}
+.lane .link.ho::before{flex:none;width:100%;background:repeating-linear-gradient(90deg,var(--amber) 0 4px,transparent 4px 9px);animation:none;height:1.5px}
+.lane .link.ho .ic{order:-1}
+@keyframes slide{to{background-position:-200% 0}}
+@keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* 3 metrics */
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px}
+.tab{border:1px solid var(--line-2);border-radius:16px;padding:12px 14px;background:var(--bg-2);display:flex;flex-direction:column;gap:2px;min-height:96px;transition:.35s var(--ease);position:relative}
+.tab .k{font-size:13px;color:var(--mute);display:flex;align-items:center;gap:7px}
+.tab .v{font-size:27px;font-weight:300;letter-spacing:-.035em;line-height:1.08;margin-top:auto;font-variant-numeric:tabular-nums}
+.tab:hover{border-color:var(--blue)}
+.tab[aria-selected="true"]{background:var(--text);color:#fff;border-color:var(--text);transform:translateY(-3px);box-shadow:0 14px 30px -18px rgba(14,26,43,.7)}
+.tab[aria-selected="true"] .k{color:#b8c4d6}
+.panel{display:grid;grid-template-columns:1fr 292px;gap:26px;align-items:center;margin-top:12px;flex:1;min-height:0}
+.panel .pv{border:1px solid var(--line);border-radius:20px;background:var(--bg-2);padding:14px 16px;position:relative;height:100%;display:grid;align-items:center}
+.pv>div{grid-area:1/1;opacity:0;visibility:hidden;transition:opacity .45s var(--ease),visibility 0s .45s;display:flex;flex-direction:column;justify-content:center;align-items:center}
+.pv>div.on{opacity:1;visibility:visible;transition-delay:0s}
+.pv svg{width:100%;height:auto;max-height:290px;overflow:visible;display:block}
+.pt h3{font-size:22px;letter-spacing:-.02em;line-height:1.18;font-weight:650}
+.pt p{color:var(--mute);font-size:15px;line-height:1.5;margin-top:8px}
+.pt .read{margin-top:12px;padding:10px 12px;border-left:2px solid var(--blue);background:var(--bg-3);border-radius:0 10px 10px 0;font-size:13px;line-height:1.45;color:var(--mute)}
+.pt .read b{color:var(--text);font-weight:650}
+.figs{display:flex;gap:6px;margin-top:6px}
+.fig{padding:4px 11px;border:1px solid var(--line-2);border-radius:999px;font-size:12.5px;color:var(--mute);transition:.3s;background:var(--bg-2)}
+.fig[aria-pressed="true"]{border-color:var(--blue);color:var(--blue);background:rgba(36,80,245,.07)}
+.sys{display:flex;align-items:center;margin-top:12px}
+.sys .n{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--dim);transition:.4s}
+.sys .n .t{width:26px;height:26px;border-radius:8px;border:1px solid var(--line-2);display:grid;place-items:center;background:var(--bg-2);transition:.4s}
+.sys .n.hl{color:var(--text)}
+.sys .n.hl .t{border-color:var(--blue);color:var(--blue);background:rgba(36,80,245,.08);box-shadow:0 0 0 4px rgba(36,80,245,.1)}
+.sys .c{flex:1;height:1px;background:var(--line-2);margin:0 5px;min-width:4px}
+.sys .sep{width:1px;height:22px;background:var(--line-2);margin:0 8px}
+.tk{transform:translate(10px,64px);transition:transform 2s cubic-bezier(.45,.05,.2,1)}
+.go .tk{transform:translate(118px,64px)}
+.bolt{opacity:0}.go .bolt{animation:flash 2s .1s both}
+@keyframes flash{0%,35%{opacity:0}50%{opacity:1}100%{opacity:0}}
+.ahead{opacity:0;transition:opacity .6s .2s}.reached .ahead{opacity:1}
+.done-n{transition:.5s}.reached .done-n{stroke:var(--mint);fill:rgba(0,149,122,.12)}
+.fe,.be,.tk4{transition:transform 1s var(--ease),opacity .7s var(--ease)}
+.fe{transform:translate(14px,10px)}.be{transform:translate(14px,84px)}
+.tk4{transform:translate(100px,45px);opacity:0}
+.comb .fe,.comb .be{transform:translate(100px,45px);opacity:0}
+.comb .tk4{opacity:1;transition-delay:.6s}
+.ho4{transition:opacity .5s}.comb .ho4{opacity:0}
+.cm{opacity:0;transition:opacity .5s .8s}.comb .cm{opacity:1}
+.pr-band{fill-opacity:0;transition:fill-opacity .5s}[data-focus="cycle"] .pr-band{fill-opacity:.12}
+
+/* 4 align */
+.align{border:1px solid var(--line);border-radius:22px;background:var(--bg-2);padding:26px 20px 18px}
+.align svg{width:100%;height:auto;display:block;overflow:visible}
+.slot{transition:transform 1s var(--ease)}
+.pulse{animation:travel 2.6s var(--ease) infinite}
+@keyframes travel{0%{transform:translateX(var(--a));opacity:0}12%{opacity:1}80%{opacity:1}100%{transform:translateX(var(--b));opacity:0}}
+.flowcap{display:flex;justify-content:space-between;font-size:13px;color:var(--dim);margin-top:10px}
+
+/* 5 tension */
+.s-tension{background:linear-gradient(180deg,rgba(217,117,0,.07),transparent 45%)}
+.s-tension .kick .num,.s-tension .note h4 .ic{color:var(--amber)}
+.s-tension .kick::after{background:rgba(217,117,0,.4)}
+.quote{font-size:19px;line-height:1.4;color:var(--text);margin-top:12px;padding-left:16px;border-left:3px solid var(--amber);max-width:700px}
+.tg{display:grid;grid-template-columns:1fr 290px 1fr;gap:18px;align-items:center}
+.side h3{font-size:16px;font-weight:650;margin-bottom:8px;letter-spacing:-.01em}
+.side ul{list-style:none;display:grid;gap:6px}
+.side li{display:flex;gap:9px;align-items:center;padding:8px 11px;border:1px solid var(--line-2);border-radius:12px;font-size:13px;color:var(--text);background:var(--bg-2);transition:.5s var(--ease)}
+.side.pro .ic{color:var(--mint)}.side.con .ic{color:var(--amber)}
+.side.con li{border-color:rgba(217,117,0,.4);background:rgba(217,117,0,.07)}
+.side.con li.resolved{opacity:.5;background:var(--bg-2);border-color:var(--line);text-decoration:line-through;text-decoration-color:rgba(217,117,0,.7)}
+.tg>svg{width:100%;height:auto;display:block;overflow:visible}
+.beam{transform-origin:180px 140px;transform:rotate(var(--ang,6deg));transition:transform 1.4s cubic-bezier(.3,1.5,.5,1)}
+.arrows{animation:sq 2.4s ease-in-out infinite}.arrows.r{animation-name:sqr}
+@keyframes sq{50%{transform:translateX(5px)}}@keyframes sqr{50%{transform:translateX(-5px)}}
+.vrow{display:grid;grid-template-columns:1fr 1.25fr;gap:10px;margin-top:12px}
+.vc{padding:9px 14px;border-radius:14px;border:1px solid var(--line-2);background:var(--bg-2)}
+.vc b{display:flex;gap:8px;align-items:center;font-size:15px;letter-spacing:-.01em}
+.vc.good{border-color:rgba(0,149,122,.5)}.vc.good b{color:var(--mint)}
+.vc.bad{border-color:rgba(217,117,0,.55);background:var(--amber-soft)}.vc.bad b{color:var(--amber)}
+.vc p{color:var(--mute);font-size:12.5px;margin-top:2px;line-height:1.4}
+.switch{grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:7px 14px 7px 9px;border:1px solid var(--line-2);border-radius:14px;font-size:13.5px;background:var(--bg-2)}
+.switch .tr{width:38px;height:22px;border-radius:99px;background:var(--line-2);position:relative;flex:none;transition:.4s var(--ease)}
+.switch .tr::after{content:"";position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:.4s var(--ease)}
+.switch[aria-checked="true"] .tr{background:var(--mint)}
+.switch[aria-checked="true"] .tr::after{transform:translateX(16px)}
+.question{margin-top:12px;padding:12px 18px;border-radius:14px;border:1.5px dashed rgba(217,117,0,.6);display:flex;gap:14px;align-items:center;font-size:17px;line-height:1.35;letter-spacing:-.01em;background:rgba(217,117,0,.05)}
+.question .ic{color:var(--amber)}.question small{color:var(--amber);font-size:12.5px;display:block;font-weight:650}
+
+/* 6 final */
+.final h2{font-size:46px;max-width:840px}
+.chain{list-style:none;display:flex;position:relative}
+.chain li{flex:1;position:relative;padding-top:34px;color:var(--mute);font-size:13.5px;line-height:1.4;padding-right:10px}
+.chain li::before{content:"";position:absolute;top:8px;left:0;width:14px;height:14px;border-radius:50%;border:2px solid var(--blue);background:var(--paper);z-index:1;transition:.4s var(--ease)}
+.chain li::after{content:"";position:absolute;top:14px;left:14px;right:0;height:2px;background:linear-gradient(90deg,var(--blue),var(--line-2))}
+.chain li:last-child::after{display:none}
+.chain li:hover::before{background:var(--blue);box-shadow:0 0 0 6px rgba(36,80,245,.14)}
+.chain strong{display:block;font-size:17px;font-weight:650;color:var(--text);letter-spacing:-.01em}
+.chain .dot{position:absolute;top:10px;left:0;width:10px;height:10px;border-radius:50%;background:var(--blue);box-shadow:0 0 10px var(--blue);animation:run 7s linear infinite;z-index:2}
+@keyframes run{0%{left:0;opacity:0}6%{opacity:1}94%{opacity:1}100%{left:calc(100% - 10px);opacity:0}}
+.next{display:flex;gap:12px;align-items:center;padding:12px 16px;border-radius:14px;background:var(--amber-soft);border:1px solid rgba(217,117,0,.4);font-size:15px;margin-top:16px}
+.next .ic{color:var(--amber)}.next b{font-weight:650}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2.5 5 13.5h6l-1 8 8-11h-6z"/></symbol>
+  <symbol id="i-flow" viewBox="0 0 24 24"><path d="M4 12h15M13.5 6.5 19.5 12l-6 5.5"/></symbol>
+  <symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></symbol>
+  <symbol id="i-business" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r=".8"/></symbol>
+  <symbol id="i-epic" viewBox="0 0 24 24"><path d="M12 3l9 9-9 9-9-9z"/></symbol>
+  <symbol id="i-ticket" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3.5"/><rect x="8.5" y="8.5" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-cmd" viewBox="0 0 24 24"><path d="M9 9h6v6H9zM9 9V6.5A2.5 2.5 0 1 0 6.5 9H9M15 9V6.5A2.5 2.5 0 1 1 17.5 9H15M9 15v2.5A2.5 2.5 0 1 1 6.5 15H9M15 15v2.5a2.5 2.5 0 1 0 2.5-2.5H15"/></symbol>
+  <symbol id="i-handoff" viewBox="0 0 24 24"><path d="M4 8h15l-4-4M20 16H5l4 4"/></symbol>
+  <symbol id="i-infinity" viewBox="0 0 24 24"><path d="M12 12c-2-3-3.5-4-5.5-4a4 4 0 1 0 0 8c2 0 3.5-1 5.5-4zm0 0c2 3 3.5 4 5.5 4a4 4 0 1 0 0-8c-2 0-3.5 1-5.5 4z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5L19.5 7"/></symbol>
+  <symbol id="i-done" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.2"/></symbol>
+  <symbol id="i-pr" viewBox="0 0 24 24"><circle cx="6" cy="5.5" r="2.5"/><circle cx="6" cy="18.5" r="2.5"/><circle cx="18" cy="18.5" r="2.5"/><path d="M6 8v8M18 16V11a4 4 0 0 0-4-4h-3M13.5 4 11 7l2.5 3"/></symbol>
+  <symbol id="i-team" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17.5" cy="9" r="2.5"/><path d="M17 14c2.5 0 4 2 4 5"/></symbol>
+  <symbol id="i-deps" viewBox="0 0 24 24"><path d="M3.5 7.5c2.5-3 5 3 8.5 0s6 3 8.5 0M3.5 12.5c2.5-3 5 3 8.5 0s6 3 8.5 0M3.5 17.5c2.5-3 5 3 8.5 0s6 3 8.5 0"/></symbol>
+  <symbol id="i-sprint" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5" fill="currentColor"/></symbol>
+  <symbol id="i-blocker" viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4.5M12 17.3v.2"/></symbol>
+  <symbol id="i-front" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 9.5h18"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></symbol>
+  <symbol id="i-review" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-build" viewBox="0 0 24 24"><path d="M8 8l-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="M20 12H5M10.5 6.5 5 12l5.5 5.5"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 7.8-8 9-4.6-1.2-8-4.5-8-9V6z"/></symbol>
+</svg>
+
+<div id="stage">
+
+<!-- 1 -->
+<section class="slide on" aria-label="Slide 1: Overview">
+  <div class="kick"><span class="num">01</span>Engineering impact story</div>
+  <h1><span class="l1">More delivery.</span><span class="l2">Less overhead.</span><span class="l3">Stronger ownership.</span></h1>
+  <p class="lede">The new way of working increased delivery velocity while reducing team size and handoffs — without a noticeable dip in delivery speed. This story walks through how we work differently, what changed, the numbers behind it and what is still open.</p>
+  <ul class="syms" id="syms"></ul>
+  <div class="vis"><svg id="heroFlow" viewBox="0 0 1000 130" role="img" aria-label="Work flowing from business context through epic, ticket, development and review to delivery"></svg></div>
+  <div class="notes">
+    <div class="note"><h4><svg class="ic" width="18" height="18"><use href="#i-bolt"/></svg>More delivery</h4><p>Tickets were often completed ahead of schedule, and there was no noticeable dip in delivery speed.</p></div>
+    <div class="note"><h4><svg class="ic" width="18" height="18"><use href="#i-handoff"/></svg>Less overhead</h4><p>The squad went from 11 to ~7 people, with fewer handoffs between frontend and backend work.</p></div>
+    <div class="note"><h4><svg class="ic" width="18" height="18"><use href="#i-infinity"/></svg>Stronger ownership</h4><p>Frontend and backend work can be combined in one ticket and carried end to end.</p></div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="slide" aria-label="Slide 2: What changed">
+  <div class="row"><div><div class="kick" style="min-width:420px"><span class="num">02</span>How we work differently</div><h2>What changed</h2></div>
+  <div class="seg" role="radiogroup" aria-label="Operating model" style="margin-top:2px"><button role="radio" aria-checked="true">Before</button><button role="radio" aria-checked="false" tabindex="-1">Now</button></div></div>
+  <p class="lede">The change is as much about how work is cut as about who does it: smaller team, broader ownership and a ticket that carries business context straight into build.</p>
+  <div class="vis">
+    <div class="chg">
+      <svg id="netA" viewBox="40 24 470 280" role="img" aria-label="Eleven connected people collapsing into a compact group of about seven"></svg>
+      <div aria-live="polite"><h3 id="stT"></h3><p id="stP"></p><div class="tags" id="stG"></div></div>
+    </div>
+    <ol class="lane" id="lane" aria-label="Delivery flow"></ol>
+  </div>
+  <div class="notes">
+    <div class="note"><h4><svg class="ic" width="18" height="18"><use href="#i-team"/></svg>Smaller team</h4><p>The squad reduced from 11 to ~7 people while delivery stayed steady.</p></div>
+    <div class="note"><h4><svg class="ic" width="18" height="18"><use href="#i-infinity"/></svg>Broader ownership</h4><p>Frontend and backend work could be combined into a single ticket and owned end to end.</p></div>
+    <div class="note"><h4><svg class="ic" width="18" height="18"><use href="#i-handoff"/></svg>Fewer handoffs</h4><p>Fewer handoffs and dependencies between steps, so work flows faster.</p></div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="slide" aria-label="Slide 3: The numbers behind it">
+  <div class="kick"><span class="num">03</span>The numbers behind it</div>
+  <h2>Delivery stayed strong. Work moved faster.</h2>
+  <p class="lede">Four signals, read together. Select one to see what it shows, how to read it and where it sits in the delivery flow.</p>
+  <div class="tabs" role="tablist" aria-label="Impact metrics">
+    <button class="tab" role="tab" aria-selected="true"><span class="k"><svg class="ic" width="16" height="16"><use href="#i-bolt"/></svg>Faster delivery</span><span class="v">Ahead of schedule</span></button>
+    <button class="tab" role="tab" aria-selected="false"><span class="k"><svg class="ic" width="16" height="16"><use href="#i-team"/></svg>Leaner team</span><span class="v">11 → ~7</span></button>
+    <button class="tab" role="tab" aria-selected="false"><span class="k"><svg class="ic" width="16" height="16"><use href="#i-pr"/></svg>Faster dev cycles</span><span class="v">53 PRs · 0.6h</span></button>
+    <button class="tab" role="tab" aria-selected="false"><span class="k"><svg class="ic" width="16" height="16"><use href="#i-infinity"/></svg>Ownership</span><span class="v">Full-stack</span></button>
+  </div>
+  <div class="panel">
+    <div class="pv">
+      <div class="on" data-p="0"><svg id="tl" viewBox="0 0 280 150" role="img" aria-label="A ticket reaches Done before the expected marker">
+        <line x1="10" y1="80" x2="270" y2="80" stroke="var(--line-2)" stroke-width="1.5"/>
+        <line x1="225" y1="36" x2="225" y2="120" stroke="var(--amber)" stroke-dasharray="3 4"/>
+        <text x="225" y="28" fill="var(--amber)" font-size="11" text-anchor="middle">Expected</text>
+        <circle class="done-n" cx="190" cy="80" r="16" fill="#fff" stroke="var(--line-2)" stroke-width="1.5"/>
+        <use href="#i-done" class="ic" x="178" y="68" width="24" height="24" style="color:var(--mint)"/>
+        <g class="ahead"><path d="M196 112H222M200 108l-4 4 4 4M218 108l4 4-4 4" fill="none" stroke="var(--mint)" stroke-width="1.3"/><text x="209" y="134" fill="var(--mint)" font-size="11" text-anchor="middle">Ahead</text></g>
+        <g class="tk"><rect y="-16" width="40" height="30" rx="9" fill="#fff" stroke="var(--blue)" stroke-width="1.5"/><use href="#i-ticket" class="ic" x="9" y="-13" width="22" height="22" style="color:var(--blue)"/></g>
+        <g class="bolt"><use href="#i-bolt" class="ic" x="100" y="28" width="24" height="24" style="color:var(--amber)"/></g>
+        <text x="10" y="104" fill="var(--dim)" font-size="10">Start</text>
+      </svg></div>
+      <div data-p="1"><svg id="netB" viewBox="40 24 470 280" role="img" aria-label="Eleven nodes collapsing into about seven"></svg></div>
+      <div data-p="2"><div class="figs"><button class="fig" id="fPR" aria-pressed="true">53 PRs merged</button><button class="fig" id="fMed" aria-pressed="false">0.6h median</button></div>
+        <svg id="prSvg" viewBox="0 0 280 150" data-focus="stream" role="img" aria-label="Fifty-three pull requests flowing through open, review and merge">
+        <text x="140" y="14" fill="var(--mint)" font-size="11" text-anchor="middle">median 0.6 h open → merge</text>
+        <path d="M10 22H270M10 17v10M270 17v10" stroke="var(--mint)" fill="none"/>
+        <rect class="pr-band" x="100" y="34" width="80" height="80" rx="10" fill="var(--blue)" stroke="var(--blue)" stroke-opacity=".5" stroke-dasharray="3 4"/>
+        <g fill="var(--dim)" font-size="10" text-anchor="middle"><text x="55" y="130">Open</text><text x="140" y="130">Review</text><text x="225" y="130">Merge</text></g>
+        <g id="prDots"></g><g id="wk" transform="translate(10 144)"></g></svg></div>
+      <div data-p="3"><svg id="own" class="comb" viewBox="0 0 280 150" role="img" aria-label="Frontend and backend tickets merging into one full-stack ticket">
+        <g class="ho4" style="color:var(--amber)"><path d="M42 60v26" stroke="var(--amber)" stroke-dasharray="3 4"/><use href="#i-handoff" class="ic" x="50" y="63" width="18" height="18"/></g>
+        <g class="fe"><rect width="56" height="50" rx="12" fill="#fff" stroke="var(--blue)" stroke-width="1.4"/><use href="#i-front" class="ic" x="16" y="7" width="24" height="24" style="color:var(--blue)"/><text x="28" y="43" fill="var(--text)" font-size="10" text-anchor="middle">Frontend</text></g>
+        <g class="be"><rect width="56" height="50" rx="12" fill="#fff" stroke="var(--blue)" stroke-width="1.4"/><use href="#i-back" class="ic" x="16" y="7" width="24" height="24" style="color:var(--blue)"/><text x="28" y="43" fill="var(--text)" font-size="10" text-anchor="middle">Backend</text></g>
+        <g class="tk4"><rect width="76" height="50" rx="12" fill="rgba(0,149,122,.1)" stroke="var(--mint)" stroke-width="1.5"/><use href="#i-front" class="ic" x="12" y="7" width="22" height="22" style="color:var(--mint)"/><use href="#i-back" class="ic" x="42" y="7" width="22" height="22" style="color:var(--mint)"/><text x="38" y="43" fill="var(--text)" font-size="10" text-anchor="middle">One ticket</text></g>
+        <g class="cm"><path d="M178 70H200" stroke="var(--mint)" stroke-width="1.4"/><use href="#i-done" class="ic" x="204" y="56" width="28" height="28" style="color:var(--mint)"/><text x="218" y="100" fill="var(--text)" font-size="10" text-anchor="middle">Delivery</text></g>
+      </svg></div>
+    </div>
+    <div class="pt" id="pt" aria-live="polite"></div>
+  </div>
+  <div class="sys" id="sys" aria-label="Where this metric sits in the delivery flow"></div>
+</section>
+
+<!-- 4 -->
+<section class="slide" aria-label="Slide 4: Business alignment">
+  <div class="row"><div><div class="kick" style="min-width:420px"><span class="num">04</span>Closing the gap before code</div><h2>Better business alignment</h2></div>
+  <div class="seg" id="segA" role="radiogroup" aria-label="When business context arrives" style="margin-top:2px"><button role="radio" aria-checked="false" tabindex="-1">Before</button><button role="radio" aria-checked="true">Now</button></div></div>
+  <p class="lede">The team now pulls business context earlier and more deeply, from Epic to Ticket level, reducing gaps before development starts.</p>
+  <div class="vis"><div class="align"><svg id="alignSvg" viewBox="0 0 900 215" role="img" aria-label="Business context moving from just before development to between Epic and Ticket"></svg>
+    <div class="flowcap"><span>Earlier in the lifecycle</span><span>Closer to development</span></div></div></div>
+  <div class="notes">
+    <div class="note"><h4><svg class="ic" width="18" height="18"><use href="#i-business"/></svg>Before</h4><p>Business context appeared immediately before development, after the ticket was already defined.</p></div>
+    <div class="note"><h4><svg class="ic" width="18" height="18"><use href="#i-flow"/></svg>Now</h4><p>Context is pulled forward and enters between Epic and Ticket, so the ticket starts with it.</p></div>
+    <div class="note"><h4><svg class="ic" width="18" height="18"><use href="#i-check"/></svg>Effect</h4><p>Fewer gaps are left to close once development starts.</p></div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="slide s-tension" aria-label="Slide 5: The tension">
+  <div class="kick"><span class="num">05</span>What still needs solving</div>
+  <h2>The tension we haven't solved yet</h2>
+  <p class="quote">Pulling additional tickets forward does not fit neatly into traditional sprint reporting.</p>
+  <div class="vis">
+    <div class="tg">
+      <div class="side pro"><h3>Pull work forward</h3><ul>
+        <li><svg class="ic" width="16" height="16"><use href="#i-check"/></svg>Better flow</li>
+        <li><svg class="ic" width="16" height="16"><use href="#i-check"/></svg>Fewer idle periods</li>
+        <li><svg class="ic" width="16" height="16"><use href="#i-check"/></svg>More completed work</li>
+        <li><svg class="ic" width="16" height="16"><use href="#i-check"/></svg>Early finishes become productive</li></ul></div>
+      <svg viewBox="0 20 360 280" role="img" aria-label="Balance between pulling work forward and protecting sprint predictability, with sprint reporting at the pivot">
+        <g class="beam" id="beamG">
+          <line x1="46" y1="140" x2="314" y2="140" stroke="var(--line-2)" stroke-width="2.5"/>
+          <line x1="46" y1="140" x2="46" y2="176" stroke="var(--line-2)"/><circle cx="46" cy="204" r="30" fill="#fff" stroke="var(--mint)"/><use href="#i-bolt" class="ic" x="32" y="190" width="28" height="28" style="color:var(--mint)"/>
+          <line x1="314" y1="140" x2="314" y2="176" stroke="rgba(217,117,0,.5)"/><circle cx="314" cy="204" r="30" fill="#fff4e5" stroke="var(--amber)"/><use href="#i-sprint" class="ic" x="300" y="190" width="28" height="28" style="color:var(--amber)"/>
+        </g>
+        <path d="M180 140 150 236h60z" fill="none" stroke="var(--line-2)" stroke-width="1.5"/>
+        <circle cx="180" cy="140" r="7" fill="#fff" stroke="var(--amber)" stroke-width="2"/>
+        <g class="arrows"><path d="M40 266h56M88 260l8 6-8 6" fill="none" stroke="var(--amber)" stroke-width="1.8" stroke-linecap="round"/></g>
+        <g class="arrows r"><path d="M320 266h-56M272 260l-8 6 8 6" fill="none" stroke="var(--amber)" stroke-width="1.8" stroke-linecap="round"/></g>
+        <rect x="102" y="249" width="156" height="34" rx="10" fill="#fff" stroke="var(--amber)"/>
+        <text x="180" y="270.5" text-anchor="middle" fill="var(--amber)" font-size="11" font-weight="600" letter-spacing="1.3">SPRINT REPORTING</text>
+      </svg>
+      <div class="side con"><h3>Protect sprint predictability</h3><ul>
+        <li><svg class="ic" width="16" height="16"><use href="#i-blocker"/></svg>Late blocker</li>
+        <li><svg class="ic" width="16" height="16"><use href="#i-alert"/></svg>Sprint commitment changes</li>
+        <li><svg class="ic" width="16" height="16"><use href="#i-alert"/></svg>Reporting becomes harder to interpret</li>
+        <li id="riskRef"><svg class="ic" width="16" height="16"><use href="#i-alert"/></svg>Next ticket may not be sufficiently refined</li></ul></div>
+    </div>
+    <div class="vrow">
+      <div class="vc good"><b><svg class="ic" width="18" height="18"><use href="#i-check"/></svg>Early finish = good</b><p>Finishing early frees capacity that would otherwise sit idle.</p></div>
+      <div class="vc bad"><b><svg class="ic" width="18" height="18"><use href="#i-alert"/></svg>Committing to pull ahead = reporting risk</b><p id="vTxt"></p></div>
+      <button class="switch" id="sw" role="switch" aria-checked="false"><span class="tr"></span><span>Unless the next ticket is already refined</span></button>
+    </div>
+  </div>
+  <div class="question"><svg class="ic" width="24" height="24"><use href="#i-sprint"/></svg><div><small>Open question</small>How do we preserve the benefits of pulling work forward without distorting sprint commitments and reporting?</div></div>
+</section>
+
+<!-- 6 -->
+<section class="slide final" aria-label="Slide 6: Takeaway">
+  <div class="kick"><span class="num">06</span>The takeaway</div>
+  <h2>The team is delivering faster with a leaner, more end-to-end operating model.</h2>
+  <p class="lede">Smaller, well-scoped work moves through review and merge quickly. Fewer handoffs and broader ownership keep it moving, and delivery stays steady.</p>
+  <div class="vis">
+    <ol class="chain" id="chain">
+      <li><strong>Smaller work</strong>Well-scoped items</li>
+      <li><strong>Faster flow</strong>Median merge in 0.6 hours</li>
+      <li><strong>Fewer handoffs</strong>Fewer dependencies</li>
+      <li><strong>More ownership</strong>Full-stack tickets</li>
+      <li><strong>Steady delivery</strong>No noticeable dip</li>
+      <span class="dot"></span>
+    </ol>
+  </div>
+  <div class="notes">
+    <div class="note"><h4><svg class="ic" width="18" height="18"><use href="#i-check"/></svg>What we can say</h4><p>Delivery speed held, tickets often finished early, 53 PRs merged in about nine weeks, and the squad is smaller.</p></div>
+    <div class="note"><h4><svg class="ic" width="18" height="18"><use href="#i-shield"/></svg>What we don't claim</h4><p>No percentage gains in productivity, quality or speed, and no claim that fewer people caused the results.</p></div>
+    <div class="note"><h4><svg class="ic" width="18" height="18"><use href="#i-sprint"/></svg>What is open</h4><p>Pulling work forward and sprint reporting still pull in different directions.</p></div>
+  </div>
+  <div class="next"><svg class="ic" width="20" height="20"><use href="#i-sprint"/></svg><span><b>Next challenge:</b> make pull-ahead work visible without compromising sprint transparency.</span></div>
+</section>
+</div>
+
+<nav class="nav" aria-label="Slide navigation">
+  <button class="arrow" id="prev" aria-label="Previous slide"><svg class="ic" width="16" height="16"><use href="#i-left"/></svg></button>
+  <div class="dots" id="dots"></div>
+  <span class="count" id="count">1 / 6</span>
+  <button class="arrow" id="next" aria-label="Next slide"><svg class="ic" width="16" height="16" style="transform:rotate(180deg)"><use href="#i-left"/></svg></button>
+</nav>
+
+<script>
+(function(){
+'use strict';
+/* ---------- content (edit here) ---------- */
+var SYMS=[['bolt','Delivery'],['trend','Velocity'],['infinity','Ownership'],['cmd','Engineering'],['flow','Flow'],['check','Quality'],['handoff','Collaboration']];
+var HERO_FLOW=[['business','Business context'],['epic','Epic'],['ticket','Ticket'],['build','Development'],['review','Review'],['done','Delivery']];
+var BEFORE=[{i:'front',l:'Frontend'},{ho:1},{i:'back',l:'Backend'},{ho:1},{i:'review',l:'Review'},{i:'done',l:'Delivery'}];
+var NOW=[{i:'business',l:'Business context'},{i:'ticket',l:'Full-stack ticket'},{i:'build',l:'Build'},{i:'review',l:'Review'},{i:'done',l:'Delivery'}];
+var STATES=[
+ {t:'11 people, work passed between specialists',p:'Frontend and backend lived in separate tickets. Every boundary between them was a handoff and a dependency, and work waited at each one.',tags:[['warn','handoff','Handoffs'],['warn','deps','Dependencies'],['','team','11 people']]},
+ {t:'~7 people, one connected team',p:'Business context flows into a full-stack ticket that one person can carry through build, review and delivery, with fewer handoffs along the way.',tags:[['good','infinity','End-to-end ownership'],['good','flow','Fewer handoffs'],['','team','~7 people']]}];
+var METRICS=[
+ {h:'Tickets finished ahead of schedule',p:'Tickets were often completed ahead of schedule, supported by smaller, well-scoped work items and faster execution. There was no noticeable dip in delivery speed.',r:'The marker positions are illustrative, not measured dates.'},
+ {h:'A smaller squad, steady delivery',p:'The squad size reduced from 11 to ~7 people while maintaining steady delivery.',r:'The two facts sit side by side. <b>Fewer people is not claimed to be the cause.</b>'},
+ {h:'53 PRs, 0.6 hour median merge',p:'Over roughly nine weeks, 53 pull requests were merged with a median time from opening to merging of 0.6 hours.',r:'Dots show the flow of the 53 merged PRs, not individual timings or weekly counts.'},
+ {h:'Fewer handoffs. More ownership.',p:'Frontend and backend work could be combined into a single ticket, enabling full-stack delivery with fewer handoffs and dependencies.',r:'Combined tickets are an option the team can use, not a rule for every ticket.'}];
+var SYS=[['team','Team'],'|',['business','Context'],['epic','Epic'],['ticket','Ticket'],['build','Development'],['review','Review'],['done','Delivery']];
+var HL=[['Ticket','Development','Review','Delivery'],['Team'],['Development','Review','Delivery'],['Ticket','Development']];
+
+/* ---------- helpers ---------- */
+var NS='http://www.w3.org/2000/svg',reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function $(s,r){return (typeof r==='string'?document.querySelector(r):(r||document)).querySelector(s)}
+function $$(s,r){return [].slice.call((typeof r==='string'?document.querySelector(r):(r||document)).querySelectorAll(s))}
+function el(n,a,p){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e}
+function ic(n,s){return '<svg class="ic" width="'+s+'" height="'+s+'" aria-hidden="true"><use href="#i-'+n+'"/></svg>'}
+function use(p,n,x,y,s,c){return el('use',{href:'#i-'+n,'class':'ic',x:x,y:y,width:s,height:s,style:'color:'+c},p)}
+function lerp(a,b,t){return a+(b-a)*t}
+function ease(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2}
+
+/* ---------- team network ---------- */
+function TeamNet(svg){
+  var B=[[70,62],[135,46],[96,112],[165,98],[292,48],[356,40],[318,106],[384,92],[190,232],[246,214],[300,250]];
+  var N=[[260,150],[260,84],[318,117],[318,183],[260,216],[202,183],[202,117],[430,60],[110,280],[330,285],[470,190]];
+  var eB=[[0,1],[1,3],[3,2],[2,0],[0,3],[4,5],[5,7],[7,6],[6,4],[5,6],[8,9],[9,10],[8,10]],xB=[[1,4],[3,6],[2,8],[7,10],[6,9]];
+  var eN=[[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[1,2],[2,3],[3,4],[4,5],[5,6],[6,1]];
+  var gE=el('g',{},svg),gX=el('g',{},svg),gN=el('g',{},svg),L=[],X=[],M=[],nodes=[],t=0,raf=0;
+  eB.forEach(function(e){L.push({e:e,k:'b',n:el('line',{stroke:'var(--line-2)','stroke-width':1.6},gE)})});
+  eN.forEach(function(e){L.push({e:e,k:'n',n:el('line',{stroke:'var(--mint)','stroke-width':1.7,'stroke-opacity':.85},gE)})});
+  xB.forEach(function(e){X.push({e:e,n:el('line',{stroke:'var(--amber)','stroke-width':1.4,'stroke-dasharray':'4 5'},gX)});M.push(use(gX,'handoff',0,0,16,'var(--amber)'))});
+  B.forEach(function(p,i){var g=el('g',{},gN);el('circle',{r:12,fill:'#fff',stroke:i<7?'var(--blue)':'var(--dim)','stroke-width':1.8},g);el('circle',{r:3.6,fill:i<7?'var(--blue)':'var(--dim)'},g);nodes.push(g)});
+  function render(){
+    var e=ease(t),q=function(i){return [lerp(B[i][0],N[i][0],e),lerp(B[i][1],N[i][1],e)]};
+    nodes.forEach(function(g,i){var p=q(i);g.setAttribute('transform','translate('+p[0]+' '+p[1]+')');g.style.opacity=i<7?1:1-e});
+    L.forEach(function(l){var a=q(l.e[0]),b=q(l.e[1]);l.n.setAttribute('x1',a[0]);l.n.setAttribute('y1',a[1]);l.n.setAttribute('x2',b[0]);l.n.setAttribute('y2',b[1]);l.n.style.opacity=l.k==='b'?1-e:e});
+    X.forEach(function(l,k){var a=q(l.e[0]),b=q(l.e[1]);l.n.setAttribute('x1',a[0]);l.n.setAttribute('y1',a[1]);l.n.setAttribute('x2',b[0]);l.n.setAttribute('y2',b[1]);l.n.style.opacity=1-e;M[k].setAttribute('x',(a[0]+b[0])/2-8);M[k].setAttribute('y',(a[1]+b[1])/2-8);M[k].style.opacity=1-e});
+  }
+  function go(to,dur){cancelAnimationFrame(raf);if(reduce){t=to;render();return}var from=t,s=performance.now();dur=dur||1300;
+    (function step(n){var k=Math.min(1,(n-s)/dur);t=lerp(from,to,k);render();if(k<1)raf=requestAnimationFrame(step)})(s)}
+  render();return {go:go,set:function(v){cancelAnimationFrame(raf);t=v;render()}};
+}
+
+/* ---------- slide engine ---------- */
+var slides=$$('.slide'),cur=0,stage=$('#stage'),hooks={};
+function fit(){var s=Math.min(innerWidth/960,(innerHeight-52)/960);stage.style.transform='translate(-50%,-50%) scale('+s+')'}
+fit();addEventListener('resize',fit);
+var dots=$('#dots');
+slides.forEach(function(s,i){var b=document.createElement('button');b.setAttribute('aria-label','Go to slide '+(i+1));b.addEventListener('click',function(){go(i)});dots.appendChild(b)});
+function go(n){
+  n=Math.max(0,Math.min(slides.length-1,n));var prev=cur;cur=n;
+  slides.forEach(function(s,i){s.classList.toggle('on',i===n);s.classList.toggle('prev',i<n);s.setAttribute('aria-hidden',i!==n)});
+  $$('button',dots).forEach(function(b,i){b.classList.toggle('on',i===n)});
+  $('#count').textContent=(n+1)+' / '+slides.length;
+  $('#prev').disabled=n===0;$('#next').disabled=n===slides.length-1;
+  if(prev!==n&&hooks[prev]&&hooks[prev].leave)hooks[prev].leave();
+  if(hooks[n]&&hooks[n].enter)hooks[n].enter();
+  try{history.replaceState(null,'','#'+(n+1))}catch(e){}
+}
+$('#prev').addEventListener('click',function(){go(cur-1)});
+$('#next').addEventListener('click',function(){go(cur+1)});
+addEventListener('keydown',function(e){
+  if(e.key==='ArrowRight'||e.key==='PageDown'){e.preventDefault();go(cur+1)}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1)}
+  else if(e.key==='Home')go(0);else if(e.key==='End')go(slides.length-1);
+});
+var tx=null;
+addEventListener('touchstart',function(e){tx=e.touches[0].clientX},{passive:true});
+addEventListener('touchend',function(e){if(tx===null)return;var d=e.changedTouches[0].clientX-tx;if(Math.abs(d)>50)go(cur+(d<0?1:-1));tx=null});
+
+/* ---------- 1 hero ---------- */
+SYMS.forEach(function(s){var li=document.createElement('li');li.innerHTML=ic(s[0],16)+s[1];$('#syms').appendChild(li)});
+(function(){
+  var svg=$('#heroFlow'),x0=60,gap=176,y=40;
+  el('line',{x1:x0,y1:y,x2:x0+gap*5,y2:y,stroke:'var(--line-2)','stroke-width':2},svg);
+  var col=['var(--dim)','var(--dim)','var(--blue)','var(--blue)','var(--mint)','var(--mint)'];
+  HERO_FLOW.forEach(function(n,i){var g=el('g',{},svg),x=x0+gap*i;
+    el('circle',{cx:x,cy:y,r:27,fill:'#fff',stroke:'var(--line-2)','stroke-width':1.6},g);
+    el('circle',{cx:x,cy:y,r:27,fill:'none',stroke:'var(--blue)','stroke-width':1.5,'class':'fn-ring',style:'animation-delay:'+((1.2*i)%2).toFixed(2)+'s'},g);
+    use(g,n[0],x-11,y-11,22,col[i]);
+    var t=el('text',{x:x,y:y+58,fill:'var(--mute)','font-size':15,'text-anchor':'middle'},g);t.textContent=n[1]});
+  if(!reduce)[0,2,4].forEach(function(b){var c=el('circle',{r:4.5,fill:'var(--blue)',style:'filter:drop-shadow(0 0 5px rgba(36,80,245,.7))'},svg);
+    el('animateMotion',{dur:'6s',begin:(-b)+'s',repeatCount:'indefinite',path:'M'+x0+' '+y+'H'+(x0+gap*5)},c)});
+})();
+
+/* ---------- 2 what changed ---------- */
+(function(){
+  var net=TeamNet($('#netA')),state=0,seg=$$('.seg button',slides[1]),auto=true,timer;
+  function lane(){var list=state?NOW:BEFORE,h='',d=0;
+    list.forEach(function(s,i){var dl='style="animation-delay:'+(d++*70)+'ms"';
+      if(s.ho)h+='<li class="link ho" '+dl+' aria-label="handoff">'+ic('handoff',16)+'handoff</li>';
+      else{h+='<li class="step" '+dl+'><span class="tile" style="color:'+(state?'var(--mint)':'var(--blue)')+'">'+ic(s.i,22)+'</span>'+s.l+'</li>';
+        var nx=list[i+1];if(nx&&!nx.ho)h+='<li class="link" '+dl+' aria-hidden="true"></li>'}});
+    $('#lane').innerHTML=h}
+  function render(){var s=STATES[state];$('#stT').textContent=s.t;$('#stP').textContent=s.p;
+    $('#stG').innerHTML=s.tags.map(function(t){return '<span class="tag '+t[0]+'">'+ic(t[1],14)+t[2]+'</span>'}).join('');
+    seg.forEach(function(b,i){b.setAttribute('aria-checked',i===state);b.tabIndex=i===state?0:-1});lane()}
+  function set(n,user){state=n;if(user)auto=false;net.go(n);render()}
+  seg.forEach(function(b,i){b.addEventListener('click',function(){set(i,true)})});
+  render();
+  hooks[1]={enter:function(){auto=true;state=0;net.set(0);render();clearTimeout(timer);timer=setTimeout(function(){if(auto)set(1)},1500)},leave:function(){clearTimeout(timer)}};
+})();
+
+/* ---------- 3 metrics ---------- */
+(function(){
+  var tabs=$$('.tab'),pv=$$('.pv>div'),pt=$('#pt'),sys=$('#sys'),active=-1;
+  SYS.forEach(function(s,i){
+    if(s==='|'){sys.insertAdjacentHTML('beforeend','<span class="sep"></span>');return}
+    sys.insertAdjacentHTML('beforeend','<span class="n" data-n="'+s[1]+'"><span class="t">'+ic(s[0],15)+'</span>'+s[1]+'</span>');
+    if(i<SYS.length-1&&SYS[i+1]!=='|')sys.insertAdjacentHTML('beforeend','<span class="c"></span>')});
+  var tl=$('#tl'),netB=TeamNet($('#netB')),own=$('#own');
+  function playTl(){tl.classList.remove('go','reached');void tl.getBoundingClientRect();tl.classList.add('go');setTimeout(function(){tl.classList.add('reached')},2000)}
+  var g=$('#prDots'),dots=[],raf=0,run=false,t0=0,prs=$('#prSvg');
+  for(var i=0;i<53;i++)dots.push({c:el('circle',{r:3.4,fill:'var(--blue)'},g),ph:i/53,y:40+((i*37)%70)});
+  var wk=$('#wk');el('line',{x1:0,y1:0,x2:260,y2:0,stroke:'var(--line-2)'},wk);
+  for(var w=0;w<=9;w++)el('line',{x1:w*260/9,y1:-3,x2:w*260/9,y2:3,stroke:'var(--line-2)'},wk);
+  var wl=el('text',{x:130,y:-6,fill:'var(--dim)','font-size':9,'text-anchor':'middle'},wk);wl.textContent='roughly 9 weeks';
+  function frame(now){var e=(now-t0)/1000,f=prs.getAttribute('data-focus');
+    dots.forEach(function(d){var p=(e*.1+d.ph)%1,x=10+p*260;d.c.setAttribute('cx',x);d.c.setAttribute('cy',d.y);
+      d.c.setAttribute('fill',x>180?'var(--mint)':'var(--blue)');
+      d.c.style.opacity=f==='cycle'?(x>100&&x<180?1:.18):.45+.55*Math.sin(p*3.1416)});
+    raf=requestAnimationFrame(frame)}
+  function prStart(){if(run)return;run=true;t0=performance.now();if(reduce){frame(t0+3000);cancelAnimationFrame(raf);return}raf=requestAnimationFrame(frame)}
+  function prStop(){run=false;cancelAnimationFrame(raf)}
+  function focus(f){prs.setAttribute('data-focus',f);$('#fPR').setAttribute('aria-pressed',f==='stream');$('#fMed').setAttribute('aria-pressed',f==='cycle')}
+  $('#fPR').addEventListener('click',function(){focus('stream')});
+  $('#fMed').addEventListener('click',function(){focus('cycle')});
+  function setOwn(c){own.classList.toggle('comb',c)}
+  function activate(i){
+    if(i===active)return;active=i;
+    tabs.forEach(function(t,k){t.setAttribute('aria-selected',k===i)});
+    pv.forEach(function(p,k){p.classList.toggle('on',k===i)});
+    var m=METRICS[i];pt.innerHTML='<h3>'+m.h+'</h3><p>'+m.p+'</p><div class="read"><b>How to read it.</b> '+m.r+'</div>';
+    $$('.n',sys).forEach(function(n){n.classList.toggle('hl',HL[i].indexOf(n.getAttribute('data-n'))>-1)});
+    if(i===0)playTl();
+    if(i===1){netB.set(0);setTimeout(function(){if(active===1)netB.go(1,1400)},350)}
+    if(i===2)prStart();else prStop();
+    if(i===3){setOwn(false);setTimeout(function(){if(active===3)setOwn(true)},800)}
+  }
+  tabs.forEach(function(t,i){t.addEventListener('click',function(){activate(i)});t.addEventListener('mouseenter',function(){activate(i)});t.addEventListener('focus',function(){activate(i)});
+    t.addEventListener('keydown',function(e){if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();var n=(i+(e.key==='ArrowDown'?1:3))%4;tabs[n].focus()}})});
+  setOwn(true);
+  hooks[2]={enter:function(){active=-1;activate(0)},leave:prStop};
+})();
+
+/* ---------- 4 alignment ---------- */
+(function(){
+  var svg=$('#alignSvg'),X=[110,340,570,800],Y=56;
+  var defs={epic:['epic','Epic','var(--blue)'],ctx:['business','Business context','var(--mint)'],ticket:['ticket','Ticket','var(--blue)'],dev:['cmd','Development','var(--blue)']};
+  var order=[['epic','ticket','ctx','dev'],['epic','ctx','ticket','dev']];
+  el('line',{x1:X[0],y1:Y+36,x2:X[3],y2:Y+36,stroke:'var(--line-2)','stroke-width':2},svg);
+  var g={};
+  Object.keys(defs).forEach(function(k){var d=defs[k],n=el('g',{'class':'slot'},svg);
+    el('rect',{x:-44,y:0,width:88,height:72,rx:18,fill:k==='ctx'?'rgba(0,149,122,.08)':'#fff',stroke:k==='ctx'?'var(--mint)':'var(--line-2)','stroke-width':k==='ctx'?2:1.5},n);
+    use(n,d[0],-13,22,26,d[2]);var t=el('text',{x:0,y:104,'text-anchor':'middle',fill:'var(--text)','font-size':15},n);t.textContent=d[1];g[k]=n});
+  var tag=el('text',{x:X[1],y:Y-14,'text-anchor':'middle',fill:'var(--mint)','font-size':14,'font-weight':600,style:'transition:opacity .6s;opacity:0'},svg);tag.textContent='Context pulled forward';
+  var sig=el('circle',{r:6,cy:Y+36,cx:0,fill:'var(--mint)','class':'pulse',style:'filter:drop-shadow(0 0 6px rgba(0,149,122,.8))'},svg);
+  var seg=$$('button','#segA');
+  function set(s){seg.forEach(function(b,i){b.setAttribute('aria-checked',i===s);b.tabIndex=i===s?0:-1});
+    order[s].forEach(function(k,i){g[k].style.transform='translate('+X[i]+'px,'+Y+'px)'});
+    tag.style.opacity=s;
+    var o=order[s],a=s?X[0]:X[o.indexOf('ctx')],b=s?X[o.indexOf('ticket')]:X[3];
+    sig.style.setProperty('--a',a+'px');sig.style.setProperty('--b',b+'px');sig.style.animation='none';void sig.getBoundingClientRect();sig.style.animation=''}
+  seg.forEach(function(b,i){b.addEventListener('click',function(){set(i)})});
+  var timer;set(0);
+  hooks[3]={enter:function(){set(0);clearTimeout(timer);timer=setTimeout(function(){set(1)},1100)},leave:function(){clearTimeout(timer)}};
+})();
+
+/* ---------- 5 tension ---------- */
+(function(){
+  var sw=$('#sw'),beam=$('#beamG'),risk=$('#riskRef'),txt=$('#vTxt'),timer;
+  function set(on){sw.setAttribute('aria-checked',on);beam.style.setProperty('--ang',on?'1.5deg':'6deg');risk.classList.toggle('resolved',on);
+    txt.textContent=on?'The next ticket is already refined, so the risk is lower. The commitment question is still open.':'The next ticket is not yet refined, so a pull-ahead could blur the sprint commitment.'}
+  sw.addEventListener('click',function(){set(sw.getAttribute('aria-checked')!=='true')});
+  set(false);beam.style.setProperty('--ang','0deg');
+  hooks[4]={enter:function(){set(false);beam.style.setProperty('--ang','0deg');clearTimeout(timer);timer=setTimeout(function(){beam.style.setProperty('--ang','6deg')},350)}};
+})();
+
+var start=parseInt((location.hash||'').slice(1),10);
+go(start>=1&&start<=slides.length?start-1:0);
+})();
+</script>
+</body>
+</html>
