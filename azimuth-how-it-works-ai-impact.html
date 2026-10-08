@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>How Azimuth works</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #06142e; --panel: #0c2149; --panel2: #10295a; --line: #284a86;
+    --accent: #41b0e7; --allianz: #003781; --text: #eaf1fb; --muted: #8fa5cb;
+    --green: #3ddc97; --amber: #ffc857; --rose: #ff7a90;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); overflow: hidden;
+    font-family: "Allianz Neo", -apple-system, "Segoe UI", system-ui, sans-serif; color: var(--text); }
+  #wrap { position: fixed; inset: 0; overflow: hidden; }
+  #stage { position: absolute; left: 50%; top: 50%; width: 1600px; height: 900px; transform-origin: center;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(1200px 600px at 50% 40%, #0b2552 0%, var(--bg) 70%); border-radius: 18px; }
+
+  /* ---------- header ---------- */
+  .title { position: absolute; left: 60px; top: 38px; }
+  .title h1 { font-size: 40px; font-weight: 700; letter-spacing: -.5px; }
+  .title h1 b { color: var(--accent); }
+  .title p { margin-top: 6px; font-size: 18px; color: var(--muted); }
+  .brand { position: absolute; right: 60px; top: 46px; font-size: 15px; color: var(--muted); text-align: right; line-height: 1.5; }
+  .brand strong { color: var(--text); font-size: 18px; }
+
+  /* ---------- reveal mechanics ---------- */
+  [data-show] { opacity: 0; transform: translateY(8px); transition: opacity .5s ease, transform .5s ease; transition-delay: 0s; }
+  [data-show].shown { opacity: 1; transform: none; transition-delay: var(--d, 0s); }
+
+  /* ---------- memory band ---------- */
+  .memory { position: absolute; left: 60px; top: 150px; width: 1500px; height: 82px; border-radius: 14px;
+    background: linear-gradient(90deg, #0e2a5c, #0c2149); border: 1.5px solid var(--line);
+    display: flex; align-items: center; gap: 14px; padding: 0 22px; transition: border-color .6s, box-shadow .6s; }
+  .memory.on { border-color: var(--accent); box-shadow: 0 0 28px rgba(65,176,231,.35); }
+  .memory.grow { border-color: var(--green); box-shadow: 0 0 34px rgba(61,220,151,.4); }
+  .memory .label { font-size: 19px; font-weight: 700; white-space: nowrap; margin-right: 8px; }
+  .memory .label small { display: block; font-size: 13px; font-weight: 500; color: var(--muted); }
+  .chip { font-size: 14.5px; padding: 7px 12px; border-radius: 999px; background: var(--panel2);
+    border: 1px solid var(--line); white-space: nowrap; color: var(--text); }
+  .chip.new { border-color: var(--green); color: var(--green); background: rgba(61,220,151,.1); }
+
+  /* ---------- cards ---------- */
+  .card { position: absolute; top: 300px; height: 330px; border-radius: 16px; padding: 16px;
+    background: var(--panel); border: 1.5px solid var(--line); opacity: .28; filter: saturate(.3);
+    transition: opacity .6s, filter .6s, border-color .6s, box-shadow .6s, transform .6s; }
+  .card.done { opacity: .9; filter: none; }
+  .card.on { opacity: 1; filter: none; border-color: var(--accent); box-shadow: 0 0 36px rgba(65,176,231,.35); transform: translateY(-4px); }
+  .card h2 { font-size: 17px; font-weight: 700; display: flex; gap: 8px; align-items: center; }
+  .card h2 .n { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+    background: var(--allianz); border: 1.5px solid var(--accent); font-size: 14px; }
+  .card .sub { font-size: 13.5px; color: var(--muted); margin: 4px 0 12px 34px; }
+
+  #c-input { left: 60px; width: 180px; }
+  #c-elab  { left: 280px; width: 380px; }
+  #c-dr    { left: 700px; width: 180px; }
+  #c-exec  { left: 920px; width: 300px; }
+  #c-pr    { left: 1260px; width: 140px; padding: 16px 12px; }
+  #c-close { left: 1430px; width: 130px; padding: 16px 12px; }
+
+  .ticket { margin-top: 10px; padding: 12px; border-radius: 10px; background: var(--panel2); border: 1px solid var(--line); font-size: 14px; line-height: 1.4; }
+  .ticket b { color: var(--accent); display: block; font-size: 13px; margin-bottom: 4px; }
+  .or { text-align: center; color: var(--muted); font-size: 13px; margin: 10px 0; }
+
+  .pills { display: flex; gap: 8px; }
+  .pill { flex: 1; text-align: center; font-size: 14.5px; font-weight: 600; padding: 9px 0; border-radius: 9px;
+    background: var(--panel2); border: 1px solid var(--line); }
+  .pill.shown { border-color: var(--accent); background: rgba(65,176,231,.14); }
+  .agents { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 16px; }
+  .agent { text-align: center; font-size: 12px; color: var(--muted); line-height: 1.25; }
+  .agent i { display: grid; place-items: center; width: 48px; height: 48px; margin: 0 auto 6px; border-radius: 50%;
+    font-style: normal; font-size: 22px; background: var(--panel2); border: 1.5px solid var(--accent); }
+  .agents-cap { margin-top: 8px; font-size: 13px; color: var(--muted); text-align: center; }
+  .gate { margin-top: 14px; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px; border-radius: 10px;
+    border: 2px dashed var(--amber); color: var(--amber); font-weight: 700; font-size: 16px; }
+  .gate.shown { animation: stamp .5s ease var(--d, 0s) both; }
+  @keyframes stamp { 0% { transform: scale(1.4); opacity: 0; } 70% { transform: scale(.96); opacity: 1; } 100% { transform: scale(1); } }
+
+  .doc { margin-top: 4px; padding: 12px; border-radius: 10px; background: #f4f7fc; color: #0b1d3f; font-size: 13.5px; line-height: 1.55; }
+  .doc b { display: block; font-size: 14px; margin-bottom: 4px; color: var(--allianz); }
+  .doc .x { color: #b3263e; } .doc .ok { color: #0d8a56; font-weight: 700; }
+  .doc .why { margin-top: 6px; padding-top: 6px; border-top: 1px solid #d5deec; font-style: italic; }
+
+  .loop { position: relative; width: 210px; height: 190px; margin: 0 auto; }
+  .loop svg { position: absolute; inset: 0; }
+  .node { position: absolute; width: 74px; padding: 6px 0; text-align: center; font-size: 14px; font-weight: 700; border-radius: 9px;
+    background: var(--panel2); border: 1.5px solid var(--accent); }
+  .orbit { transform-origin: 105px 98px; }
+  #c-exec.on .orbit { animation: spin 1.5s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .units { display: flex; gap: 6px; margin-top: 8px; }
+  .units span { flex: 1; height: 8px; border-radius: 4px; background: var(--panel2); border: 1px solid var(--line); transition: background .4s; }
+  .units span.fill { background: var(--green); border-color: var(--green); }
+  .unit-cap { font-size: 13.5px; color: var(--muted); margin-top: 6px; text-align: center; }
+  .unit-cap b { color: var(--text); }
+
+  .mini { display: flex; flex-direction: column; gap: 9px; margin-top: 4px; }
+  .mini div { font-size: 13.5px; padding: 9px 8px; border-radius: 9px; background: var(--panel2); border: 1px solid var(--line); line-height: 1.3; }
+  .mini .g { border-color: var(--green); color: var(--green); }
+  .mini .a { border-color: var(--amber); color: var(--amber); }
+
+  /* ---------- connectors ---------- */
+  #wires { position: absolute; inset: 0; pointer-events: none; }
+  .wire { stroke: var(--line); stroke-width: 3; fill: none; transition: stroke .5s; }
+  .wire.on { stroke: var(--accent); stroke-dasharray: 8 7; animation: flow .6s linear infinite; }
+  .beam { stroke: var(--accent); stroke-width: 2.5; stroke-dasharray: 4 6; opacity: 0; transition: opacity .6s; animation: flow .5s linear infinite; }
+  .beam.shown { opacity: .9; }
+  .up { stroke: var(--green); stroke-width: 3.5; fill: none; stroke-dasharray: 8 7; opacity: 0; transition: opacity .6s; animation: flow .5s linear infinite reverse; }
+  .up.shown { opacity: 1; }
+  @keyframes flow { to { stroke-dashoffset: -30; } }
+  .tag { position: absolute; font-size: 13px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--bg); }
+  .tag.blue { color: var(--accent); border: 1px solid var(--accent); }
+  .tag.green { color: var(--green); border: 1px solid var(--green); }
+
+  /* ---------- trail ---------- */
+  .trail { position: absolute; left: 60px; top: 668px; width: 1500px; height: 96px; border-radius: 14px; padding: 14px 22px;
+    background: rgba(12,33,73,.6); border: 1.5px dashed var(--line); }
+  .trail .path { font-family: ui-monospace, Menlo, monospace; font-size: 15px; color: var(--muted); }
+  .trail .path b { color: var(--text); }
+  .files { display: flex; gap: 10px; margin-top: 10px; }
+  .file { font-family: ui-monospace, Menlo, monospace; font-size: 13.5px; padding: 6px 11px; border-radius: 7px;
+    background: var(--panel2); border: 1px solid var(--accent); color: var(--text); }
+
+  /* ---------- caption + controls ---------- */
+  .caption { position: absolute; left: 60px; right: 60px; top: 790px; height: 60px; display: flex; align-items: center; gap: 18px; }
+  .caption .txt { font-size: 23px; font-weight: 600; line-height: 1.3; transition: opacity .35s; }
+  .caption .txt.fade { opacity: 0; }
+  .dots { position: absolute; left: 60px; bottom: 26px; display: flex; gap: 8px; }
+  .dots span { width: 34px; height: 5px; border-radius: 3px; background: var(--line); cursor: pointer; transition: background .3s; }
+  .dots span.on { background: var(--accent); }
+  .hint { position: absolute; right: 60px; bottom: 20px; font-size: 13px; color: var(--muted); }
+  .final { position: absolute; inset: 0; z-index: 10; display: grid; place-items: center; pointer-events: none;
+    background: rgba(6,20,46,.72); border-radius: 18px; }
+  .final div { padding: 26px 44px; border-radius: 18px; background: #081a3d; border: 2px solid var(--accent);
+    font-size: 30px; font-weight: 700; text-align: center; line-height: 1.45; box-shadow: 0 0 60px rgba(65,176,231,.35); }
+  .final div small { display: block; font-size: 19px; font-weight: 500; color: var(--muted); }
+</style>
+</head>
+<body>
+<div id="wrap"><div id="stage">
+
+  <div class="title">
+    <h1>How <b>Azimuth</b> works</h1>
+    <p>AI-Driven Development Life Cycle: one auditable trail from intent to pull request</p>
+  </div>
+  <div class="brand"><strong>AI Native Success Story</strong><br>Claude Code plugin · multi-agent · human-gated</div>
+
+  <!-- project memory -->
+  <div class="memory" id="memory">
+    <div class="label">🧠 Project memory<small>loaded into every session</small></div>
+    <span class="chip">CLAUDE.md</span>
+    <span class="chip">architecture docs</span>
+    <span class="chip">coding patterns</span>
+    <span class="chip">team standards</span>
+    <span class="chip">past decisions</span>
+    <span class="chip new" data-show="7" style="--d:1.2s">+ DR-001</span>
+    <span class="chip new" data-show="7" style="--d:1.6s">+ lessons learned</span>
+  </div>
+
+  <!-- wires -->
+  <svg id="wires" viewBox="0 0 1600 900">
+    <defs>
+      <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M0,0 L10,5 L0,10 z" fill="#41b0e7"/></marker>
+      <marker id="ahg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M0,0 L10,5 L0,10 z" fill="#3ddc97"/></marker>
+    </defs>
+    <path class="wire" data-wire="2" d="M242 465 L278 465" marker-end="url(#ah)"/>
+    <path class="wire" data-wire="4" d="M662 465 L698 465" marker-end="url(#ah)"/>
+    <path class="wire" data-wire="5" d="M882 465 L918 465" marker-end="url(#ah)"/>
+    <path class="wire" data-wire="6" d="M1222 465 L1258 465" marker-end="url(#ah)"/>
+    <path class="wire" data-wire="7" d="M1402 465 L1428 465" marker-end="url(#ah)"/>
+    <path class="beam" data-show="1" d="M360 234 L360 294" marker-end="url(#ah)"/>
+    <path class="beam" data-show="1" style="--d:.2s" d="M470 234 L470 294" marker-end="url(#ah)"/>
+    <path class="beam" data-show="1" style="--d:.4s" d="M580 234 L580 294" marker-end="url(#ah)"/>
+    <path class="beam" data-show="5" d="M1070 234 L1070 294" marker-end="url(#ah)"/>
+    <path class="up" data-show="7" style="--d:.6s" d="M1495 296 L1495 238" marker-end="url(#ahg)"/>
+  </svg>
+  <span class="tag blue" data-show="1" style="left:604px; top:250px; --d:.5s">context, not guesswork</span>
+  <span class="tag blue" data-show="5" style="left:1088px; top:250px">your patterns</span>
+  <span class="tag green" data-show="7" style="left:1300px; top:250px; --d:.8s">knowledge compounds ↑</span>
+
+  <!-- ① intent -->
+  <div class="card" id="c-input" data-from="0" data-to="0">
+    <h2><span class="n">1</span>Intent</h2>
+    <div class="ticket"><b>🎫 Jira · ABC-123</b>Email claimants a confirmation when they file a claim</div>
+    <div class="or">or</div>
+    <div class="ticket"><b>✨ Just an idea</b>"Claimants should get a confirmation email"</div>
+  </div>
+
+  <!-- ② elaboration -->
+  <div class="card" id="c-elab" data-from="1" data-to="3">
+    <h2><span class="n">2</span>Elaboration</h2>
+    <div class="sub">Understand first, design before code</div>
+    <div class="pills">
+      <div class="pill" data-show="2">Define</div>
+      <div class="pill" data-show="2" style="--d:1.1s">Analyze</div>
+      <div class="pill" data-show="2" style="--d:2.2s">Design</div>
+    </div>
+    <div class="agents">
+      <div class="agent" data-show="2" style="--d:.3s"><i>📋</i>Business<br>Analyst</div>
+      <div class="agent" data-show="2" style="--d:.7s"><i>🏛️</i>Architect</div>
+      <div class="agent" data-show="2" style="--d:1.1s"><i>🛡️</i>Security</div>
+      <div class="agent" data-show="2" style="--d:1.5s"><i>🧪</i>QA</div>
+      <div class="agent" data-show="2" style="--d:1.9s"><i>🔍</i>Spec<br>Reviewer</div>
+    </div>
+    <div class="agents-cap" data-show="2" style="--d:2.6s">specialist agents review it from every angle</div>
+    <div class="gate" data-show="3">👤 You approve ✓</div>
+  </div>
+
+  <!-- ③ decision -->
+  <div class="card" id="c-dr" data-from="4" data-to="4">
+    <h2><span class="n">3</span>Decision</h2>
+    <div class="sub" style="margin-left:0">recorded, not lost</div>
+    <div class="doc" data-show="4" style="--d:.3s">
+      <b>DR-001</b>
+      <span class="x">A. Send inline ✗</span><br>
+      <span class="ok">B. Queue + retry ✓</span>
+      <div class="why">Why: survives a mail-provider outage and reuses the existing queue</div>
+    </div>
+  </div>
+
+  <!-- ④ execution -->
+  <div class="card" id="c-exec" data-from="5" data-to="5">
+    <h2><span class="n">4</span>Execution: bolt loop</h2>
+    <div class="sub">one work unit at a time</div>
+    <div class="loop">
+      <svg viewBox="0 0 210 190">
+        <circle cx="105" cy="98" r="66" fill="none" stroke="#284a86" stroke-width="3"/>
+        <g class="orbit"><circle cx="105" cy="32" r="8" fill="#3ddc97"/></g>
+      </svg>
+      <div class="node" style="left:68px; top:14px">Code</div>
+      <div class="node" style="left:136px; top:132px">Test</div>
+      <div class="node" style="left:0; top:132px">Verify</div>
+    </div>
+    <div class="units" id="units"><span></span><span></span><span></span><span></span></div>
+    <div class="unit-cap" id="unitCap">work unit <b>0 / 4</b></div>
+  </div>
+
+  <!-- ⑤ PR -->
+  <div class="card" id="c-pr" data-from="6" data-to="6">
+    <h2><span class="n">5</span>PR</h2>
+    <div class="sub" style="margin-left:0">opened &amp; summarised</div>
+    <div class="mini">
+      <div data-show="6" style="--d:.2s">#128 claim confirmation email</div>
+      <div class="g" data-show="6" style="--d:.7s">✓ tests green</div>
+      <div class="a" data-show="6" style="--d:1.2s">👀 review always required</div>
+    </div>
+  </div>
+
+  <!-- ⑥ close -->
+  <div class="card" id="c-close" data-from="7" data-to="7">
+    <h2><span class="n">6</span>Close</h2>
+    <div class="sub" style="margin-left:0">finish &amp; reflect</div>
+    <div class="mini">
+      <div class="g" data-show="7" style="--d:.2s">✓ ACs verified</div>
+      <div data-show="7" style="--d:.6s">📝 retro</div>
+      <div data-show="7" style="--d:1s">📦 archived</div>
+    </div>
+  </div>
+
+  <!-- audit trail -->
+  <div class="trail">
+    <div class="path">📁 one auditable trail · <b>docs/specs/ABC-123-claim-confirmation-email/</b></div>
+    <div class="files">
+      <span class="file" data-show="2" style="--d:.4s">spec.md</span>
+      <span class="file" data-show="2" style="--d:1.4s">analysis.md</span>
+      <span class="file" data-show="2" style="--d:2.5s">solution-design.md</span>
+      <span class="file" data-show="2" style="--d:2.9s">test-design.md</span>
+      <span class="file" data-show="4" style="--d:.6s">dr-001-email-delivery.md</span>
+      <span class="file" data-show="5" style="--d:4.5s">execution-summary.md</span>
+      <span class="file" data-show="6" style="--d:.8s">status.md</span>
+      <span class="file" data-show="7" style="--d:.8s">retrospective.md</span>
+    </div>
+  </div>
+
+  <div class="caption"><div class="txt" id="cap"></div></div>
+  <div class="dots" id="dots"></div>
+  <div class="hint">space: pause · ← →: step · F: fullscreen</div>
+  <div class="final" data-show="8" style="--d:.4s"><div>Intent → Decision → Design → Code → PR<small>Structured like your best engineers work. Every step documented, every gate human-approved.</small></div></div>
+
+</div></div>
+
+<script>
+const STEPS = [
+  { t: 3000, cap: "It starts from a Jira ticket, or just an idea." },
+  { t: 3500, cap: "Azimuth loads your project memory first. No session starts from zero." },
+  { t: 5500, cap: "Elaboration: specialist agents define, analyze and design before any code is written." },
+  { t: 3200, cap: "A human approves at every checkpoint. Nothing is built without sign-off." },
+  { t: 3800, cap: "Every significant choice becomes a Decision Record: the options, the trade-offs, and why." },
+  { t: 6500, cap: "Bolt loop: code → test → verify for each work unit, following your team's own patterns." },
+  { t: 3800, cap: "A pull request is opened and summarised. PR review is never skipped." },
+  { t: 5200, cap: "Close: acceptance criteria verified, retrospective captured, and the knowledge feeds the next feature." },
+  { t: 6000, cap: "" },
+];
+let step = -1, timer = null, unitTimer = null, paused = false;
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+
+const dots = $('#dots');
+STEPS.forEach((_, i) => { const d = document.createElement('span'); d.onclick = () => go(i); dots.appendChild(d); });
+
+function setUnits(n) {
+  $$('#units span').forEach((s, i) => s.classList.toggle('fill', i < n));
+  $('#unitCap').innerHTML = n >= 4 ? 'work unit <b>4 / 4</b> ✓ done' : `work unit <b>${n + 1} / 4</b>`;
+}
+
+function go(n) {
+  step = n;
+  $$('[data-show]').forEach(el => el.classList.toggle('shown', n >= +el.dataset.show));
+  $$('.card').forEach(c => {
+    const f = +c.dataset.from, t = +c.dataset.to;
+    c.classList.toggle('on', n >= f && n <= t);
+    c.classList.toggle('done', n > t);
+  });
+  $$('.wire').forEach(w => { const k = +w.dataset.wire; w.classList.toggle('on', k === 2 ? n >= 1 && n <= 3 : n === k); });
+  $('#memory').classList.toggle('on', n === 1);
+  $('#memory').classList.toggle('grow', n === 7);
+  $$('#dots span').forEach((d, i) => d.classList.toggle('on', i <= n));
+
+  clearInterval(unitTimer);
+  if (n < 5) setUnits(-1), $('#unitCap').innerHTML = 'work unit <b>0 / 4</b>';
+  else if (n > 5) setUnits(4);
+  else { let u = 0; setUnits(0); unitTimer = setInterval(() => { u++; setUnits(u); if (u >= 4) clearInterval(unitTimer); }, 1450); }
+
+  const cap = $('#cap');
+  cap.classList.add('fade');
+  setTimeout(() => { cap.textContent = STEPS[n].cap; cap.classList.remove('fade'); }, 300);
+
+  schedule();
+}
+function schedule() {
+  clearTimeout(timer);
+  if (!paused) timer = setTimeout(() => go((step + 1) % STEPS.length), STEPS[step].t);
+}
+document.addEventListener('keydown', e => {
+  if (e.key === ' ') { paused = !paused; paused ? clearTimeout(timer) : schedule(); e.preventDefault(); }
+  if (e.key === 'ArrowRight') go(Math.min(step + 1, STEPS.length - 1));
+  if (e.key === 'ArrowLeft') go(Math.max(step - 1, 0));
+  if (e.key === 'f' || e.key === 'F') document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+});
+function fit() { const s = Math.min(innerWidth / 1600, innerHeight / 900); $('#stage').style.transform = `translate(-50%, -50%) scale(${s})`; }
+addEventListener('resize', fit); addEventListener('load', fit); fit();
+
+const q = new URLSearchParams(location.search).get('step');
+// ?step=N renders that frame as a still (for screenshots / static slide fallback)
+if (q !== null) {
+  document.head.insertAdjacentHTML('beforeend', '<style>*{transition:none!important;animation-delay:0s!important}.gate.shown{animation:none}</style>');
+  paused = true; go(+q); clearInterval(unitTimer); if (+q === 5) setUnits(2);
+  $('#cap').textContent = STEPS[+q].cap; $('#cap').classList.remove('fade');
+} else go(0);
+</script>
+</body>
+</html>
